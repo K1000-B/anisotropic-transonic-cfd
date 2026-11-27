@@ -25,10 +25,11 @@ class OperationTests(unittest.TestCase):
     def test_interior_boundary_split_and_markers(self):
         mesh = grid(1)
         split = state(mesh, 4, GeometryConstraints(splittable_boundary_edges=frozenset({(0, 1)})))
-        self.assertEqual(split.split((0, 2)), "constrained")
-        self.assertIsNone(split.split((0, 3)))
+        config = RemeshParameters()
+        self.assertEqual(split.split((0, 2), config), "constrained")
+        self.assertIsNone(split.split((0, 3), config))
         assert_allclose(split.xy[4], [0.5, 0.5], atol=1e-12)
-        self.assertIsNone(split.split((0, 1)))
+        self.assertIsNone(split.split((0, 1), config))
         result, _ = split.snapshot()
         self.assertEqual((len(result.coordinates), len(result.triangles)), (6, 5))
         self.assertEqual(result.boundary[0, 5], "wall")
@@ -44,7 +45,7 @@ class OperationTests(unittest.TestCase):
         self.assertEqual(fixed.collapse(edge, config), "constrained")
         self.assertEqual(fixed.relocate(6, config), "constrained")
         self.assertEqual(fixed.swap(edge, config), "constrained")
-        self.assertEqual(fixed.split(edge), "constrained")
+        self.assertEqual(fixed.split(edge, config), "constrained")
         editable = state(mesh)
         self.assertEqual(editable.collapse((0, 1), config), "constrained")
         self.assertIsNone(editable.collapse(edge, config))
@@ -53,6 +54,13 @@ class OperationTests(unittest.TestCase):
         self.assertAlmostEqual(result.triangle_areas.sum(), 1)
         for index, original in enumerate(origin):
             assert_array_equal(result.coordinates[index], mesh.coordinates[original])
+
+    def test_split_rejects_quality_degradation(self):
+        mesh = with_boundary([[0, 0], [1, 0], [0.5, np.sqrt(3) / 2]], [[0, 1, 2]])
+        editable = state(mesh, 4, GeometryConstraints(splittable_boundary_edges=None))
+        config = RemeshParameters(min_quality=0.9, convergence_quality=0.95)
+        self.assertEqual(editable.split((0, 1), config), "quality")
+        self.assertEqual(len(editable.xy), 3)
 
     def test_swap_improves_quality_and_rejects_concave_patch(self):
         mesh = with_boundary([[0, 0], [1, 0], [1, 1], [0, 0.25]], [[0, 1, 2], [0, 2, 3]])

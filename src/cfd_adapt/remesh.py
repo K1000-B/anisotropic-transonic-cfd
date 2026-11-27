@@ -181,15 +181,11 @@ class _Triangulation:
         origin = np.array([v if v < len(self.field.mesh.coordinates) else -1 for v in keep])
         return mesh, origin
 
-    def split(self, edge):
+    def split(self, edge, config):
         if edge in self.protected or (edge in self.boundary and edge not in self.splittable):
             return "constrained"
         a, b = edge
         _, position = self.field.edge_measure(self.xy[a], self.xy[b], midpoint=True)
-        return self._split_at(edge, position)
-
-    def _split_at(self, edge, position):
-        a, b = edge
         old = self.edges[edge].copy()
         vertex = self.next_vertex
         new = []
@@ -199,9 +195,12 @@ class _Triangulation:
             u, v, w = (tri[(start + i) % 3] for i in range(3))
             new.extend(((u, vertex, w), (vertex, v, w)))
         point_metric = self.field.at(position)
-        points, _ = self.geometry(new, vertex, position, point_metric)
+        points, tensors = self.geometry(new, vertex, position, point_metric)
         if not positive_triangles(points).all():
             return "orientation"
+        previous = self.quality([self.triangles[face] for face in sorted(old)]).min()
+        if triangle_quality(points, tensors).min() < min(config.min_quality, previous) * (1 - config.quality_gain):
+            return "quality"
         self.next_vertex += 1
         self.xy[vertex] = position
         self.metric[vertex] = point_metric
@@ -392,7 +391,7 @@ def _run_pass(state, config, diagnostics, budget):
 
     for name, operation, split in (
         ("collapse", lambda edge: state.collapse(edge, config), False),
-        ("split", state.split, True),
+        ("split", lambda edge: state.split(edge, config), True),
     ):
         if split:
             state.born.clear()
