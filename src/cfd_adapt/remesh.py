@@ -398,8 +398,8 @@ def _run_pass(state, config, diagnostics, budget):
             state.born.clear()
         priority = -1 if split else 1
         cutoff = config.split_above if split else config.collapse_below
-        candidates = sorted((priority * state.length(edge), edge) for edge in state.edges
-                            if priority * state.length(edge) < priority * cutoff)
+        measured = ((priority * state.length(edge), edge) for edge in state.edges)
+        candidates = sorted((length, edge) for length, edge in measured if length < priority * cutoff)
         for _, edge in candidates:
             if accepted.total() >= budget:
                 return accepted

@@ -61,11 +61,11 @@ class P1MetricField:
     def _build(self, indices, lower, upper):
         lo, hi = lower[indices].min(axis=0), upper[indices].max(axis=0)
         if len(indices) <= 8:
-            return _Box(tuple(lo), tuple(hi), indices)
+            return _Box(tuple(map(float, lo)), tuple(map(float, hi)), indices)
         axis = int(np.argmax(hi - lo))
         order = np.argsort(lower[indices, axis] + upper[indices, axis], kind="stable")
         left, right = np.split(indices[order], [len(indices) // 2])
-        return _Box(tuple(lo), tuple(hi), None,
+        return _Box(tuple(map(float, lo)), tuple(map(float, hi)), None,
                     (self._build(left, lower, upper), self._build(right, lower, upper)))
 
     def _candidates(self, a, b=None):
@@ -148,21 +148,29 @@ class P1MetricField:
         order = np.flatnonzero(valid)
         order = order[np.lexsort((-upper[order], lower[order]))]
         end = 0.0
-        segments = []
+        pieces = []
+        endpoints = []
         for index in order:
             if upper[index] <= end:
                 continue
             if lower[index] - end > self.tolerance:
                 break
+            if lower[index] > end:
+                at_join = w_a[index] + end * (w_b[index] - w_a[index])
+                if at_join.min() < -self.tolerance:
+                    break
             stop = min(1.0, float(upper[index]))
-            if 1.0 - stop <= self.tolerance:
+            if 1.0 - stop <= self.tolerance and w_b[index].min() >= -self.tolerance:
                 stop = 1.0
-            values = np.stack((w_a[index], w_b[index]))
-            weights = self._closed_weights(values[0] + np.array([[end], [stop]]) * (values[1] - values[0]))
-            segments.append((end, stop, candidates[index], weights))
+            pieces.append(index)
+            endpoints.append((end, stop))
             end = stop
             if end == 1.0:
-                return segments
+                ends = np.array(endpoints)
+                origin_weights = w_a[pieces, None, :]
+                slopes = w_b[pieces, None, :] - origin_weights
+                weights = self._closed_weights(origin_weights + ends[:, :, None] * slopes)
+                return candidates[pieces], ends, weights
         raise OutsideSourceError(f"segment {a.tolist()} to {b.tolist()} leaves the source domain")
 
     @staticmethod
@@ -172,15 +180,6 @@ class P1MetricField:
         lo, hi = np.minimum(first, last), np.maximum(first, last)
         ratio = lo / hi
         return (2 / 3) * hi * (1 + ratio * ratio / (1 + ratio))
-
-    @staticmethod
-    def _directional_roots(matrices, direction):
-        scale = np.max(np.abs(direction))
-        unit = direction / scale
-        squared = np.einsum("...ij,i,j->...", matrices, unit, unit)
-        if np.any(squared <= 0) or not np.isfinite(squared).all():
-            raise ArithmeticError("invalid directional metric in edge integration")
-        return np.sqrt(squared) * scale
 
     def source_edge_lengths(self, edges):
         """Vectorised analytic lengths for source edges or subsegments of one face."""
@@ -209,12 +208,15 @@ class P1MetricField:
         if np.array_equal(a, b):
             self.locate(a)
             return (0.0, a.copy()) if midpoint else 0.0
-        segments = self._segments(a, b)
-        weights = np.stack([segment[3] for segment in segments])
-        faces = np.array([segment[2] for segment in segments])
-        endpoints = np.array([segment[:2] for segment in segments])
-        metric = np.einsum("skv,svij->skij", weights, self.nodal[self.mesh.triangles[faces]])
-        roots = self._directional_roots(metric, b - a)
+        faces, endpoints, weights = self._segments(a, b)
+        direction = b - a
+        scale = max(abs(direction[0]), abs(direction[1]))
+        unit = direction / scale
+        nodal = np.einsum("svij,i,j->sv", self.nodal[self.mesh.triangles[faces]], unit, unit)
+        squared = np.einsum("skv,sv->sk", weights, nodal)
+        if squared.min() <= 0 or not np.isfinite(squared.max()):
+            raise ArithmeticError("invalid directional metric in edge integration")
+        roots = np.sqrt(squared) * scale
         widths = endpoints[:, 1] - endpoints[:, 0]
         lengths = widths * self._linear_sqrt_mean(roots[:, 0], roots[:, 1])
         total = float(lengths.sum())
