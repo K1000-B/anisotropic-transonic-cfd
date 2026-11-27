@@ -1,0 +1,43 @@
+# Operating system and editor artifacts
+.DS_Store
+._*
+*~
+*.swp
+*.swo
+
+# Credentials and local-only material (not a publication security boundary)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+/local/
+
+# Python environments and generated caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Reproducible outputs; preserve inputs and reviewed reference data elsewhere
+/runs/
+/outputs/
+
+# Document build artifacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
