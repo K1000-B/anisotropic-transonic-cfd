@@ -28,7 +28,7 @@ Use the Mission 01 SU2 snapshot or another planar unpartitioned SU2 ASCII mesh. 
 
 The nodal CSV requires a `Density` column plus `PointID`, planar `x` and `y`, or both forms of identity. The reader accepts shuffled rows and checks for missing, duplicate, ambiguous and inconsistent matches. Supply both IDs and coordinates wherever available. By default the geometric match allows an absolute componentwise difference of `1e-9` times the largest mesh extent. A `solution` JSON object can override `density_column`, `id_column`, `coordinate_columns` and `coordinate_atol`. The supported path is an ASCII CSV with one row per source vertex. Native binary restart, partitioned meshes and surface-only solution files require a separate input step.
 
-A minimal `run.json` for the unit-square verification scale is:
+The following `run.json` uses the unit-square verification scale.
 
 ```json
 {
