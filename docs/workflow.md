@@ -2,7 +2,7 @@
 
 ## Repository organization
 
-The seven numbered stage directories document scientific responsibilities; their READMEs preserve them in Git without placeholder programs or data. Add implementation, geometry, cases and tests only when real inputs and tasks require them. Current directories contain documentation only.
+The seven numbered stage directories organize scientific responsibilities. The baseline-mesh stage now contains real native geometry, a task-specific verifier and one reviewed reference snapshot; other stages remain documentation only. Add implementation, cases and tests only when real inputs and tasks require them.
 
 `AGENTS.md` owns permanent collaboration rules; `scientific-framework.md` owns the scientific scope and methodology; `environment.md` owns tooling observations and environment requirements; `project-status.md` owns current progress, decisions and next actions. The README is the public entry point, not a duplicate project log.
 

@@ -2,7 +2,7 @@
 
 Scientific project investigating an existing anisotropic triangular mesh adaptation algorithm for capturing shocks in transonic airfoil flows, followed by an assessment of viscous effects and boundary-layer resolution.
 
-**Status:** project foundations, runtime qualification and scientific-stage organization. No algorithm, geometry, solver configuration, mesh, experimental dataset, or simulation result has been imported or produced. The existing adaptation implementation remains outside this repository pending technical and publication-rights review.
+**Status:** project foundations and runtime qualification are complete. A native parametric NACA 0012 baseline mesh has been generated and geometrically verified: see [baseline mesh](01_baseline_mesh/README.md). No CFD run, experimental dataset or adaptation implementation is present. The existing adaptation work remains external pending technical and publication-rights review.
 
 ## Scientific approach
 
@@ -32,7 +32,7 @@ The algorithm currently supports triangles only. Extending it to quadrilaterals 
 | [05_rans_simulations](05_rans_simulations/README.md) | Viscous cases, hybrid boundary-layer meshes and analysis |
 | [06_experimental_validation](06_experimental_validation/README.md) | Experimental comparison, provenance and uncertainty |
 
-These directories currently contain scope documentation only. They are not Python import namespaces. Shared implementation will be added once under `src/` when real code arrives; cases will reuse it. Generated runs and outputs are separated from versioned sources. See the [workflow](docs/workflow.md).
+The baseline stage contains geometry, verification tools and one selected reference snapshot; the other stages currently contain scope documentation. Stage names are not Python import namespaces. Reusable implementation will be shared under `src/` when needed; task-specific mesh inspection remains in the baseline stage. Generated runs are separated from versioned sources. See the [workflow](docs/workflow.md).
 
 ## Planned tools
 

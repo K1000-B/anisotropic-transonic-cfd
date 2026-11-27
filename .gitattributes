@@ -1,0 +1,2 @@
+# Preserve the native Gmsh SU2 export, whose boundary lines end with spaces.
+01_baseline_mesh/reference/*.su2 whitespace=-blank-at-eol

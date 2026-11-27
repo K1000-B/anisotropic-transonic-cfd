@@ -4,7 +4,7 @@ Last updated: 2026-11-27.
 
 ## Current state
 
-Project initialization is complete. The second mission adds software runtime qualification and seven numbered scientific-stage directories. Their contents remain documentation only: no algorithm, geometry, case, mesh, experimental dataset or computed result is present. Runtime diagnostics are not scientific verification or physical validation.
+Initialization, runtime qualification and stage organization are complete. The user selected NACA 0012 and authorized baseline mesh generation. The baseline stage now contains native reusable geometry, a parametric triangular C-layout, a specialized verifier and a reviewed reference snapshot (7154 nodes, 13702 triangles). Gmsh coherence, quantitative geometry/topology/quality checks, native SU2 export comparison and visual inspection passed. Default MSH regeneration was byte-identical. No CFD run or physical validation was performed. Details, geometry convention, metrics and limitations are owned by `01_baseline_mesh/README.md`.
 
 Public repository: [K1000-B/anisotropic-transonic-cfd](https://github.com/K1000-B/anisotropic-transonic-cfd). `main` tracks HTTPS `origin/main`. Git history records actual commits and publication history; check local/remote state at each session rather than treating this document as a live synchronization monitor.
 
@@ -40,11 +40,11 @@ The proposed license for original code remains [MIT](https://choosealicense.com/
 - Low-level `pysu2` imports, but high-level `SU2` import fails due to absent internal NumPy. Use direct executable orchestration initially; request a container change only if a real use requires the high-level tools.
 - Runtime checks do not establish mesh/restart format compatibility, a working CFD case, exact upstream source/build provenance, or numerical correctness. Host Python 3.14 compatibility of future dependencies remains to be checked.
 - Existing algorithm provenance and publication rights are unknown. No external scientific resource was imported. License approval remains outstanding.
-- Airfoil, experiment, physical conditions, numerical settings and compute budget remain undecided. Euler exterior-mesh reuse for RANS remains a strategy to verify.
+- NACA 0012 is selected; its original finite trailing-edge geometry is implemented. Experimental specimen compatibility, domain independence, flow conditions, CFD numerical settings and compute budget remain unresolved. Euler exterior-mesh reuse for RANS remains a strategy to verify.
 
 ## Next actions
 
 1. Receive the existing algorithm and supporting materials outside the public checkout, establish provenance/rights, and perform a read-only scientific and technical assessment.
 2. Identify its actual mathematical method, formats, dependencies and verification needs before a scoped import or dependency change.
 3. Arbitrate the license before applying one; assess whether any container Python repair is actually needed.
-4. Use the reviewed method and primary experimental evidence to define the next scientific task. No geometry, mesh or CFD simulation is authorized by this qualification mission.
+4. Review the baseline geometry convention against candidate transonic experiments before selecting a CFD case. The baseline generation mission authorizes geometry and mesh checks, but no Euler/RANS run, adaptation algorithm implementation or convergence study.
