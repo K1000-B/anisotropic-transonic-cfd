@@ -22,6 +22,7 @@ Quadrilateral or hybrid support in the adaptation algorithm is outside the main 
 
 - **Code verification:** test mathematical operations and implementation against exact or controlled cases where available. Establish tests from the actual algorithm after import.
 - **Solution verification:** estimate discretization and iterative errors for the computed quantities of interest. Separate iterative convergence from mesh convergence.
+- **Adaptation convergence:** stabilization of mesh/cycle indicators is a separate stopping concept. It establishes neither sufficient convergence of each CFD solve nor spatial discretization convergence. Define and assess all three independently.
 - **Model validation:** compare physical predictions with suitable experimental evidence, accounting for differences and uncertainty. Euler results are not a viscous experimental validation by default.
 - Quantify shock location, strength and numerical thickness with explicit extraction definitions; pressure distributions, lift, drag, boundary-layer characteristics, shock–boundary-layer interaction, mesh complexity and computational cost may also be relevant.
 - Specify dimensional or nondimensional conventions and normalization before comparisons. Distinguish pressure and viscous drag contributions where relevant.

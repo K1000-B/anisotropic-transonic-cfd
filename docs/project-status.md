@@ -4,47 +4,47 @@ Last updated: 2026-11-27.
 
 ## Current state
 
-Initialization work only. Permanent instructions, scientific scope, workflow and an environment assessment are documented. No scientific implementation, case, mesh, imported dataset or computed result is present. No scientific claim has been tested or physically validated.
+Project initialization is complete. The second mission adds software runtime qualification and seven numbered scientific-stage directories. Their contents remain documentation only: no algorithm, geometry, case, mesh, experimental dataset or computed result is present. Runtime diagnostics are not scientific verification or physical validation.
 
-Public repository: [K1000-B/anisotropic-transonic-cfd](https://github.com/K1000-B/anisotropic-transonic-cfd). Created and initially synchronized on 2026-11-27. `origin` uses HTTPS and `main` tracks `origin/main`. Description and seven scientific topics are configured. Git history is the authoritative record of actual commits.
+Public repository: [K1000-B/anisotropic-transonic-cfd](https://github.com/K1000-B/anisotropic-transonic-cfd). `main` tracks HTTPS `origin/main`. Git history records actual commits and publication history; check local/remote state at each session rather than treating this document as a live synchronization monitor.
 
 ## Organization decisions
 
 | Decision | Rationale |
 | --- | --- |
-| Root `AGENTS.md` plus focused documentation | Durable session entry and clear ownership of rules, science, environment and progress without relying on chat memory |
-| Documentation-only initial tree | Existing scientific work has not arrived; avoid speculative source/case directories and empty scaffolding |
-| `main`, atomic Conventional Commits, ordinary pushes | Simple traceable workflow suited to the current project size; branches and review can be added when useful |
-| Repository-local GitHub noreply identity | Preserve commit attribution without publishing a personal email or changing global configuration |
-| Ignore generated root output locations, not entire scientific formats | Keep large reproducible results out of Git while allowing reviewed reference meshes and datasets |
-| No custom skill, automation, CI or dependency specification | No demonstrated repeated workflow or executable implementation yet; avoid unnecessary infrastructure |
-| No license applied | Ownership and redistribution rights of pre-existing work remain unresolved; explicit owner approval is required |
+| Root instructions plus focused `docs/` files | Durable session entry; separate ownership of rules, science, environment and progress |
+| Seven numbered scientific-stage directories with local READMEs | Make the requested scientific sequence explicit without fake programs or data |
+| Shared importable code under future `src/`, actual tests under future `tests/` | Keep stage names independent from package imports; prevent duplicate algorithms/workflows and circular dependencies |
+| Existing designated host venv; no new dependency installation | Respect the supplied environment; record its inventory without inventing project requirements |
+| Non-interactive Docker exec with explicit wrapper activation | Avoid terminal interaction and distinguish executable availability from Python initialization |
+| Ignored local path settings and external-document mapping | Keep private host paths and protected originals out of public content |
+| Root generated run/output locations; reviewed references remain trackable | Separate scientific inputs from large reproducible artifacts without ignoring entire data formats |
+| `main`, atomic Conventional Commits and ordinary pushes | Simple workflow; branches/review when useful; no history rewriting |
+| No custom skill, CI, automation or license grant | No present need for extra infrastructure; ownership and licensing still require review |
 
-A proposed license for original project code is [MIT](https://choosealicense.com/licenses/mit/), for its short permissive terms. This is a proposal only. Before applying it, confirm ownership/coauthor permissions and whether third-party code imposes other terms. Documentation and datasets may require separate terms and attribution. This initialization does not approve publication of the external algorithm or teaching material.
+The proposed license for original code remains [MIT](https://choosealicense.com/licenses/mit/), pending explicit approval and ownership/coauthor checks. No license has been applied. Documentation/data or third-party code may require separate terms.
 
-## Initial checks
+## Completed work and evidence
 
-- Inspected the existing repository, branch, remotes and pre-existing untracked operating-system artifact; no prior scientific files or commits were present.
-- Checked installed executable availability and Git/GitHub CLI/Docker CLI versions without modifying scientific environments.
-- Verified GitHub CLI authentication with network-capable execution and confirmed the account through the GitHub API.
-- Consulted official Codex instructions documentation for repository-level continuity.
-- Reviewed all seven initial files and the staged diff; checked local Markdown links, final newlines, trailing whitespace, and common local-path/credential patterns. No issue was found in these bounded checks; they are not a comprehensive automated security audit.
-- Checked ignore behavior: local scratch material, generated outputs and Python environments are ignored; representative geometry, solver configuration, reference data and mesh inputs remain eligible for tracking.
-- Created and pushed the initial commit `f6f651b` (`chore: initialize scientific project foundations`). Verified a clean working tree and identical local/remote `main` commit IDs after fetching.
-- Confirmed public visibility and default branch through the GitHub API; an unauthenticated API request independently returned the repository metadata with `private: false`. Verified published root entries and configured topics.
-- This status update records the publication outcome in a separate documentation commit. No scientific tests or physical validation were performed because no scientific implementation or case exists yet.
+- Initial foundations were committed and published as `f6f651b` and `5b76b97`; public visibility was verified, including without authentication.
+- Inspected the user-designated host Python; checked interpreter identity, package inventory, dependency metadata and imports. No package was added. Details and limitations are in `environment.md` and its linked inventory.
+- Inspected Docker image/digest, architecture, mounts, resources and permissions. Started the existing container after explicit user confirmation resolved an automatic approval rejection. The container remains running; its image, configuration and installed software were not changed.
+- Verified SU2 8.5.0 help, non-interactive activation, low-level wrapper import, two-rank MPI collectives and shared project read/write access. Diagnostic markers were removed. No solver driver or CFD case was run.
+- Qualified Gmsh CLI and ParaView application executables. Both bundled Python tools imported `paraview.simple`; rendering and scientific I/O were not tested.
+- Preserved existing editor settings and host venv through explicit ignore rules. Added local machine notes/tool paths outside publication, and numbered-stage READMEs defining responsibilities and inputs/outputs.
+- Checked all 15 public candidate files for local links, final newlines, whitespace, unexpectedly large content and selected private-path/credential patterns; no issue was found. Verified ignore rules and absence of already-tracked environment/local files. These bounded checks are not a comprehensive security audit.
+
+## Open limitations and decisions
+
+- AMD64 SU2 runs under emulation on ARM64. Docker has 4 CPUs and about 4.80 GiB RAM; performance/scaling is unmeasured. Resource changes need approval and evidence.
+- Low-level `pysu2` imports, but high-level `SU2` import fails due to absent internal NumPy. Use direct executable orchestration initially; request a container change only if a real use requires the high-level tools.
+- Runtime checks do not establish mesh/restart format compatibility, a working CFD case, exact upstream source/build provenance, or numerical correctness. Host Python 3.14 compatibility of future dependencies remains to be checked.
+- Existing algorithm provenance and publication rights are unknown. No external scientific resource was imported. License approval remains outstanding.
+- Airfoil, experiment, physical conditions, numerical settings and compute budget remain undecided. Euler exterior-mesh reuse for RANS remains a strategy to verify.
 
 ## Next actions
 
-1. Receive the existing algorithm and supporting materials outside the public repository, clarify provenance and publication rights, and perform a read-only technical assessment before a scoped import.
-2. Receive the designated Python environment and SU2 Docker details. Do not create or modify them in anticipation.
-3. Resolve the proposed license with the user before applying any license grant.
-4. Use the actual algorithm and primary experimental sources to define the next scientific task and arbitrate important physical choices with the user.
-
-## Open issues and scientific cautions
-
-- Publication rights and licensing of external work are unknown.
-- Scientific software versions, Python dependencies, computational resources and exact SU2 launch workflow are not yet qualified.
-- Airfoil, reference experiment, physical conditions and numerical settings remain undecided.
-- Exterior Euler-mesh reuse for RANS must be checked for viscous adequacy; wall discretization and shock displacement may require targeted changes.
-- Future convergence and shock-extraction methods must account for discontinuities and nonuniform anisotropic mesh sequences; apparent convergence alone is not validation.
+1. Receive the existing algorithm and supporting materials outside the public checkout, establish provenance/rights, and perform a read-only scientific and technical assessment.
+2. Identify its actual mathematical method, formats, dependencies and verification needs before a scoped import or dependency change.
+3. Arbitrate the license before applying one; assess whether any container Python repair is actually needed.
+4. Use the reviewed method and primary experimental evidence to define the next scientific task. No geometry, mesh or CFD simulation is authorized by this qualification mission.

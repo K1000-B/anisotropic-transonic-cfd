@@ -22,18 +22,22 @@
 - The existing adaptation algorithm supports triangles only; preserve and examine it before proposing justified changes. Do not rewrite it wholesale or extend element support by default.
 - The comparison with the unavailable instructor SU2 adaptation procedure is definitively excluded. Use independent verification.
 - Treat reuse of an Euler-adapted exterior mesh for RANS as an initial strategy requiring verification, not as established adequacy.
-- Distinguish code verification, solution verification, iterative convergence, mesh convergence, model validation, numerical uncertainty and physical modelling uncertainty.
+- Distinguish code verification, solution verification, iterative CFD convergence, mesh adaptation convergence, spatial discretization convergence, model validation, numerical uncertainty and physical modelling uncertainty. Stable adaptation cycles do not establish spatial convergence.
 - Base conclusions on quantitative, reproducible evidence and appropriate quantities of interest. A solver exit status or visual comparison alone is insufficient.
 - Preserve original data; document transformations, units, conventions, provenance, uncertainties and relevant negative results. Prefer primary scientific sources and official documentation.
 
 ## Tool and environment constraints
 
-- Do not create a Python environment, install packages, modify an existing environment or assume any library is available. The user will designate the environment; subsequent dependency work must respect the agreed authorization and constraints.
+- Use `.PROJECT_CFDvenv/bin/python` for host project Python work. Before every execution or installation, verify `sys.executable` and `sys.prefix` identify that environment; do not rely only on an activated prompt. The user authorizes justified dependencies in this environment, but no global or anticipatory installations. Do not create another environment without approval. Record actual requirements when needed; the observed package inventory is not a requirements specification.
+- Keep `.PROJECT_CFDvenv/`, `.vscode/`, `local/`, `runs/` and `outputs/` ignored; verify ignore behavior before staging. Never publish machine-specific absolute paths. Use repository-relative paths and ignored local tool/path configuration.
+- The reference solver container is `su2-docker`; starting it and running non-CFD qualification diagnostics are authorized. Do not change its image, configuration, mounts or software. Follow the verified non-interactive activation in `docs/environment.md`; an interactive shell and `docker exec` have different Python initialization. Keep host Python, container Python and ParaView's bundled interpreter separate.
+- Read the documented limitations before using SU2 Python tools: `pysu2` imports, but the high-level `SU2` package fails because NumPy is absent internally. No container dependency change is authorized. AMD64 execution on the ARM64 Docker host requires emulation; do not assume native timing or parallel scaling.
 - Do not modify Docker, installed software, global Codex settings, other projects or user-wide configuration without approval. Prefer repository-local mechanisms.
 - Use native, readable, English-commented, parametric Gmsh `.geo` programs for operations its language can express. Avoid Python scripts that merely enumerate geometry points or reproduce Gmsh features. Use Python when it adds real algorithmic or automation value.
 - Verify Gmsh syntax against official documentation when needed. Verify every SU2 option, syntax and behavior against the actual solver version; do not copy unexplained tutorial settings.
 - Keep SU2 `.cfg` files and launch commands documented and reproducible. Use ParaView state files or scripting when useful, and Python for reproducible quantitative analysis and report-quality figures.
-- During initialization: no CFD runs, generated meshes, scientific algorithms, arbitrary physical/numerical parameters, mock programs or demonstration results.
+- During foundation and environment qualification work: no CFD runs, generated meshes, scientific algorithms, arbitrary physical/numerical parameters, mock programs or demonstration results.
+- Numbered directories organize scientific stages, not Python import namespaces. Follow `docs/workflow.md` for shared-code ownership, source/output separation and local references to protected resources. Do not duplicate geometry, adaptation logic, workflow code or post-processing between case directories.
 
 ## Git and public publication
 

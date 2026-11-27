@@ -2,7 +2,7 @@
 
 Scientific project investigating an existing anisotropic triangular mesh adaptation algorithm for capturing shocks in transonic airfoil flows, followed by an assessment of viscous effects and boundary-layer resolution.
 
-**Status:** project foundations only. No algorithm, geometry, solver configuration, mesh, experimental dataset, or simulation result has been imported or produced. The existing adaptation implementation remains outside this repository pending technical and publication-rights review.
+**Status:** project foundations, runtime qualification and scientific-stage organization. No algorithm, geometry, solver configuration, mesh, experimental dataset, or simulation result has been imported or produced. The existing adaptation implementation remains outside this repository pending technical and publication-rights review.
 
 ## Scientific approach
 
@@ -20,9 +20,23 @@ The algorithm currently supports triangles only. Extending it to quadrilaterals 
 | [Environment](docs/environment.md) | Observed tooling and outstanding environment information |
 | [Project status](docs/project-status.md) | Current state, organization decisions and next actions |
 
+## Scientific stages
+
+| Directory | Responsibility |
+| --- | --- |
+| [00_resources](00_resources/README.md) | References, original notes and publication rights |
+| [01_baseline_mesh](01_baseline_mesh/README.md) | Native parametric Gmsh geometry and initial meshes |
+| [02_mesh_adaptation](02_mesh_adaptation/README.md) | Triangular adaptation method and verification evidence |
+| [03_adaptive_workflow](03_adaptive_workflow/README.md) | Shared automated solve/adapt workflow |
+| [04_euler_simulations](04_euler_simulations/README.md) | Euler cases, convergence and shock-capture studies |
+| [05_rans_simulations](05_rans_simulations/README.md) | Viscous cases, hybrid boundary-layer meshes and analysis |
+| [06_experimental_validation](06_experimental_validation/README.md) | Experimental comparison, provenance and uncertainty |
+
+These directories currently contain scope documentation only. They are not Python import namespaces. Shared implementation will be added once under `src/` when real code arrives; cases will reuse it. Generated runs and outputs are separated from versioned sources. See the [workflow](docs/workflow.md).
+
 ## Planned tools
 
-Python for scientific algorithms, automation and quantitative analysis; native Gmsh `.geo` programs for geometry and initial meshing; SU2 in a user-specified Docker environment for CFD; ParaView for mesh and flow inspection. Versions and dependencies for scientific work are not yet established. There is currently no installation or execution procedure for a CFD case.
+The qualified runtime baseline is host Python 3.14.7, Gmsh `4.15.2-git`, ParaView 6.1.1 and SU2 8.5.0 in the existing Docker container. Host, SU2-wrapper and ParaView Python environments are separate. The AMD64 SU2 image runs under emulation on an ARM64 host; the high-level SU2 Python package lacks NumPy internally, while the low-level wrapper import passes. See [environment qualification](docs/environment.md) for evidence, launch diagnostics and limitations. There is no implemented CFD-case execution procedure yet.
 
 ## Reuse and publication
 
