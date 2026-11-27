@@ -6,6 +6,8 @@ Last updated: 2026-11-27.
 
 Initialization, runtime qualification and stage organization are complete. The user selected NACA 0012 and authorized baseline mesh generation. The baseline stage now contains native reusable geometry, a parametric triangular C-layout, a specialized verifier and a reviewed reference snapshot (7154 nodes, 13702 triangles). Gmsh coherence, quantitative geometry/topology/quality checks, native SU2 export comparison and visual inspection passed. Default MSH regeneration was byte-identical. No CFD run or physical validation was performed. Details, geometry convention, metrics and limitations are owned by `01_baseline_mesh/README.md`.
 
+Mission 02 implements and verifies one solver-independent adaptation from nodal density using the published project theory. The reference cases include two rotated manufactured transitions and the Mission 01 C-grid. The implementation exports SU2 meshes and ParaView diagnostics. [Mission 02 evidence](../02_mesh_adaptation/verification.md) records geometry checks, residual noncompliance, runtime and achieved node counts. [Mission 03](../03_adaptive_workflow/README.md) owns the subsequent solve/adapt workflow.
+
 Public repository: [K1000-B/anisotropic-transonic-cfd](https://github.com/K1000-B/anisotropic-transonic-cfd). `main` tracks HTTPS `origin/main`. Git history records actual commits and publication history; check local/remote state at each session rather than treating this document as a live synchronization monitor.
 
 ## Organization decisions
@@ -14,7 +16,7 @@ Public repository: [K1000-B/anisotropic-transonic-cfd](https://github.com/K1000-
 | --- | --- |
 | Root instructions plus focused `docs/` files | Durable session entry; separate ownership of rules, science, environment and progress |
 | Seven numbered scientific-stage directories with local READMEs | Make the requested scientific sequence explicit without fake programs or data |
-| Shared importable code under future `src/`, actual tests under future `tests/` | Keep stage names independent from package imports; prevent duplicate algorithms/workflows and circular dependencies |
+| Shared importable code under `src/` and tests under `tests/` | Keep stage names independent from package imports; prevent duplicate algorithms/workflows and circular dependencies |
 | Existing designated host venv; no new dependency installation | Respect the supplied environment; record its inventory without inventing project requirements |
 | Non-interactive Docker exec with explicit wrapper activation | Avoid terminal interaction and distinguish executable availability from Python initialization |
 | Ignored local path settings and external-document mapping | Keep private host paths and protected originals out of public content |
@@ -39,12 +41,11 @@ The proposed license for original code remains [MIT](https://choosealicense.com/
 - AMD64 SU2 runs under emulation on ARM64. Docker has 4 CPUs and about 4.80 GiB RAM; performance/scaling is unmeasured. Resource changes need approval and evidence.
 - Low-level `pysu2` imports, but high-level `SU2` import fails due to absent internal NumPy. Use direct executable orchestration initially; request a container change only if a real use requires the high-level tools.
 - Runtime checks do not establish mesh/restart format compatibility, a working CFD case, exact upstream source/build provenance, or numerical correctness. Host Python 3.14 compatibility of future dependencies remains to be checked.
-- Existing algorithm provenance and publication rights are unknown. No external scientific resource was imported. License approval remains outstanding.
+- The stage 02 implementation follows the project LaTeX and does not import the previously mentioned external algorithm. Its provenance and rights remain outstanding if it is later supplied. License approval remains outstanding.
 - NACA 0012 is selected; its original finite trailing-edge geometry is implemented. Experimental specimen compatibility, domain independence, flow conditions, CFD numerical settings and compute budget remain unresolved. Euler exterior-mesh reuse for RANS remains a strategy to verify.
 
 ## Next actions
 
-1. Receive the existing algorithm and supporting materials outside the public checkout, establish provenance/rights, and perform a read-only scientific and technical assessment.
-2. Identify its actual mathematical method, formats, dependencies and verification needs before a scoped import or dependency change.
-3. Arbitrate the license before applying one; assess whether any container Python repair is actually needed.
-4. Review the baseline geometry convention against candidate transonic experiments before selecting a CFD case. The baseline generation mission authorizes geometry and mesh checks, but no Euler/RANS run, adaptation algorithm implementation or convergence study.
+1. Establish the Mission 03 handoff with a selected CFD case, a real SU2 nodal export and a mesh import check in the qualified container.
+2. Set geometry constraints, restart or transfer policy, shared sampling points and separate CFD and remeshing criteria before looping.
+3. Assess the baseline geometry convention against candidate transonic experiments and resolve code licensing separately.

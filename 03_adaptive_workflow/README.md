@@ -1,9 +1,7 @@
-# Automated adaptive CFD workflow
+# Adaptive CFD workflow
 
-Own the shared solve/adapt cycle contract and orchestration documentation. No routine is implemented yet. Reuse one implementation for all cases rather than duplicating scripts.
+Mission 03 will coordinate Gmsh, host Python and SU2 Docker. Its inputs include a reviewed case configuration, triangular source mesh, mesh-adaptation parameters and local tool paths. It will prepare inputs, solve, assess iterative convergence, extract fields, adapt, check quality, and compare quantities on successive meshes.
 
-Future inputs are geometry/mesh references, reviewed case configuration, adaptation controls and local tool/path settings. The workflow will coordinate Gmsh, host Python and SU2 Docker: prepare inputs, solve, assess iterative convergence, extract fields, adapt, check quality, compare quantities and decide whether to continue.
+[Mission 02](../02_mesh_adaptation/README.md) supplies `cfd_adapt.adapt` and the ASCII SU2 mesh and density-CSV interfaces. For each accepted converged solution, align density to the current mesh with point identifiers and coordinates, call one adaptation, and export the returned mesh with its markers. The output numbering is compact. Retained source vertices may move, and new ones have no source ID. Validate the desired restart or field-transfer policy before continuing the CFD solve. Preserve the density association, solver settings, geometry constraints, mesh IDs and diagnostics in the cycle provenance.
 
-Outputs will include cycle-indexed meshes, configurations, histories, quantities of interest, costs, error logs and provenance under root `runs/`. Failure handling and restart checkpoints must be designed around real solver behavior. A failed cycle must remain identifiable and must not silently produce an accepted next mesh.
-
-Treat iterative CFD convergence, mesh adaptation convergence and spatial discretization convergence separately. A stable adaptation stopping criterion is not a mesh-error estimate. The verified runtime launch method is in [environment qualification](../docs/environment.md).
+The [operational specification](../02_mesh_adaptation/mathematical-specification.md) records the theory's cycle and relative density-profile change. Sample both solutions at the same physical points and verify a nonzero denominator. Review shock position, transition width, plateau densities, mesh quality and computational cost. Track iterative CFD convergence, internal remeshing termination, stabilization across adaptation cycles, and spatial convergence separately. The verified non-interactive runtime launch method is in [environment qualification](../docs/environment.md).

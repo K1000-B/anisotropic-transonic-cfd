@@ -2,7 +2,7 @@
 
 ## Repository organization
 
-The seven numbered stage directories organize scientific responsibilities. The baseline-mesh stage now contains real native geometry, a task-specific verifier and one reviewed reference snapshot; other stages remain documentation only. Add implementation, cases and tests only when real inputs and tasks require them.
+The seven numbered stage directories organize scientific responsibilities. The baseline stage contains native geometry, a task-specific verifier and one reviewed reference snapshot. The adaptation stage contains the theory, verification driver and reviewed numerical evidence.
 
 `AGENTS.md` owns permanent collaboration rules; `scientific-framework.md` owns the scientific scope and methodology; `environment.md` owns tooling observations and environment requirements; `project-status.md` owns current progress, decisions and next actions. The README is the public entry point, not a duplicate project log.
 
@@ -10,7 +10,7 @@ The seven numbered stage directories organize scientific responsibilities. The b
 
 `00_resources` supports all stages. `01_baseline_mesh` owns reusable geometry and baseline mesh definitions. `02_mesh_adaptation` owns the adaptation method and its verification evidence. `03_adaptive_workflow` coordinates those tools and SU2. `04_euler_simulations` and `05_rans_simulations` supply case-specific inputs to the same workflow. `06_experimental_validation` compares approved results with traceable experimental evidence. RANS mesh construction may reuse baseline geometry and the Euler-adapted exterior, subject to adequacy checks.
 
-Numbered directories are scientific stages, not Python package names. When executable code arrives, place reusable adaptation, orchestration and quantitative analysis in one ordinary importable package under root `src/`, with actual tests under root `tests/`; neither is created yet. Scientific-stage documents and cases will refer to those modules. Establish packaging and approved dependencies from the actual imported code, without `sys.path` patches or copies across stages.
+Numbered directories organize scientific stages. Reusable importable code lives in `src/cfd_adapt/` and automated tests in `tests/`. Scientific-stage tools and future cases import these modules. The actual package dependencies are declared in `pyproject.toml`.
 
 Keep dependencies directed: numerical mesh/adaptation code must not import Euler/RANS cases or orchestration; orchestration calls reusable components; cases provide data/configuration; analysis consumes outputs. Share geometry by referencing its authoritative `.geo` definition. ParaView scripts will run through its own application interpreter, while host numerical code uses the designated project venv. No pipeline or circular dependency is implemented.
 

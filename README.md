@@ -1,12 +1,12 @@
 # Anisotropic Mesh Adaptation for Transonic Airfoil CFD
 
-Scientific project investigating an existing anisotropic triangular mesh adaptation algorithm for capturing shocks in transonic airfoil flows, followed by an assessment of viscous effects and boundary-layer resolution.
+Scientific project developing and investigating anisotropic triangular mesh adaptation for capturing shocks in transonic airfoil flows, followed by an assessment of viscous effects and boundary-layer resolution.
 
-**Status:** project foundations and runtime qualification are complete. A native parametric NACA 0012 baseline mesh has been generated and geometrically verified: see [baseline mesh](01_baseline_mesh/README.md). No CFD run, experimental dataset or adaptation implementation is present. The existing adaptation work remains external pending technical and publication-rights review.
+**Status.** The [NACA 0012 baseline mesh](01_baseline_mesh/README.md) has passed geometric verification. [Mission 02](02_mesh_adaptation/README.md) implements one theory-based adaptation and verifies it on manufactured density fields, including on the baseline mesh. CFD solution verification and experimental comparison are downstream stages.
 
 ## Scientific approach
 
-The planned sequence is theoretical analysis, implementation review and verification, Euler solution/adaptation cycles, transition to RANS with a hybrid boundary-layer mesh, and comparison with experimental literature. An optional study may compare Euler and different RANS mesh strategies using quantitative shock and aerodynamic indicators.
+The sequence covers theoretical analysis, numerical implementation and verification, Euler solution/adaptation cycles, transition to RANS with a hybrid boundary-layer mesh, and comparison with experimental literature. An optional study may compare Euler and different RANS mesh strategies using quantitative shock and aerodynamic indicators.
 
 The algorithm currently supports triangles only. Extending it to quadrilaterals or hybrid meshes is outside the main scope. Comparison with the unavailable instructor-provided SU2 adaptation procedure has been abandoned. Independent verification will use controlled tests and convergence studies.
 
@@ -32,7 +32,7 @@ The algorithm currently supports triangles only. Extending it to quadrilaterals 
 | [05_rans_simulations](05_rans_simulations/README.md) | Viscous cases, hybrid boundary-layer meshes and analysis |
 | [06_experimental_validation](06_experimental_validation/README.md) | Experimental comparison, provenance and uncertainty |
 
-The baseline stage contains geometry, verification tools and one selected reference snapshot; the other stages currently contain scope documentation. Stage names are not Python import namespaces. Reusable implementation will be shared under `src/` when needed; task-specific mesh inspection remains in the baseline stage. Generated runs are separated from versioned sources. See the [workflow](docs/workflow.md).
+The baseline stage contains geometry, verification tools and a selected reference snapshot. The adaptation stage owns the theory and verification evidence. Reusable Python code lives in `src/cfd_adapt/` and its tests in `tests/`. Generated runs live outside the versioned source directories. See the [workflow](docs/workflow.md).
 
 ## Planned tools
 

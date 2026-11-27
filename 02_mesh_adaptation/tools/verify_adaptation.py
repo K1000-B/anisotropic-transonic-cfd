@@ -115,6 +115,7 @@ def plots(path, source, result, target_nodes):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.collections import EllipseCollection
+    from matplotlib.ticker import NullFormatter
 
     xy = source.coordinates
     m = result.metric
@@ -153,6 +154,10 @@ def plots(path, source, result, target_nodes):
     axes[2, 0].hist([a, b], bins=bins, density=True, label=["Source", "Adapted"], histtype="step", linewidth=1.4)
     axes[2, 0].axvline(1, color="#444", linestyle=":")
     axes[2, 0].set(xscale="log", xlabel="Metric edge length", ylabel="Probability density")
+    low, high = axes[2, 0].get_xlim()
+    ticks = [v for v in (0.001, 0.01, 0.1, 0.3, 0.5, 1, 2, 5, 10) if low < v < high]
+    axes[2, 0].set_xticks(ticks, labels=[f"{v:g}" for v in ticks])
+    axes[2, 0].xaxis.set_minor_formatter(NullFormatter())
     axes[2, 0].legend()
     for metric_quality, before, after in (
         (False, d.initial_physical_quality, d.final_physical_quality),
@@ -169,6 +174,26 @@ def plots(path, source, result, target_nodes):
     axes[2, 2].set(ylabel="Vertices", ylim=(0, max(counts) * 1.15))
     fig.savefig(path / "verification.png", dpi=160)
     fig.savefig(path / "verification.pdf")
+    plt.close(fig)
+
+
+def airfoil_detail(path, source, adapted):
+    import matplotlib.pyplot as plt
+
+    fig, axes = plt.subplots(2, 2, figsize=(11, 6), layout="constrained")
+    for i, (title, mesh) in enumerate((("Source", source), ("Adapted", adapted))):
+        for j, (region, xlim, ylim) in enumerate((
+            ("Profile", (-0.15, 1.35), (-0.26, 0.26)),
+            ("Wake", (0.7, 8.2), (-0.9, 0.9)),
+        )):
+            axis = axes[j, i]
+            axis.triplot(*mesh.coordinates.T, mesh.triangles, lw=0.3, color="#233e4e")
+            for a, b in mesh.markers["airfoil"]:
+                axis.plot(*mesh.coordinates[[a, b]].T, lw=0.9, color="#b65134")
+            axis.set(title=f"{title} · {region}", xlim=xlim, ylim=ylim, aspect="equal",
+                     xlabel="x / chord", ylabel="y / chord")
+    fig.savefig(path / "airfoil-detail.png", dpi=160)
+    fig.savefig(path / "airfoil-detail.pdf")
     plt.close(fig)
 
 
@@ -226,6 +251,8 @@ def run(name, output, level, profile, figures, passes):
     write_diagnostics(path, source, result, evidence, level=level)
     if figures:
         plots(path, source, result, settings.target_nodes)
+        if name == "baseline":
+            airfoil_detail(path, source, result.mesh)
     print(f"{name}: {len(source.coordinates)} -> {len(result.mesh.coordinates)} vertices, "
           f"{wall:.3f} s, {result.diagnostics.termination}", flush=True)
     return evidence
