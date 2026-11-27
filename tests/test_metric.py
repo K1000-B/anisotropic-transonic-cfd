@@ -8,7 +8,7 @@ from cfd_adapt.metric import (
     MetricParameters, bounded_log_spectrum, construct_metric, nodal_average,
     recover_hessian, regularise_curvature, tensor,
 )
-from support import grid
+from cfd_adapt.verification import grid
 
 
 class MeshTests(unittest.TestCase):
@@ -34,6 +34,12 @@ class MeshTests(unittest.TestCase):
                     {"boundary": [[0, 1], [1, 2], [2, 3], [3, 0]]})
         assert_allclose(mesh.nodal_areas, [0.5, 1/6, 0.5, 1/3])
         assert_allclose(nodal_average(mesh, [1, 4]), [3, 1, 3, 4])
+
+    def test_nested_disks_are_rejected(self):
+        with self.assertRaisesRegex(ValueError, "overlapping domains"):
+            Mesh([[0, 0], [2, 0], [0, 2], [0.2, 0.2], [0.8, 0.2], [0.2, 0.8]],
+                 [[0, 1, 2], [3, 4, 5]],
+                 {"rim": [[0, 1], [1, 2], [0, 2], [3, 4], [4, 5], [3, 5]]})
 
 
 class RecoveryTests(unittest.TestCase):

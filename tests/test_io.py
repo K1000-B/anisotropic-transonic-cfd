@@ -1,4 +1,7 @@
 import csv
+from contextlib import redirect_stdout
+import io
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -8,9 +11,10 @@ import numpy as np
 from numpy.testing import assert_allclose, assert_array_equal
 
 from cfd_adapt import Mesh, MetricParameters, RemeshParameters, adapt
+from cfd_adapt.cli import main
 from cfd_adapt.diagnostics import summarise, write_diagnostics
 from cfd_adapt.io import constraints_from_ids, read_density_csv, read_su2, write_su2
-from support import grid
+from cfd_adapt.verification import grid
 
 
 class IOTests(unittest.TestCase):
@@ -88,3 +92,26 @@ class IOTests(unittest.TestCase):
                 self.assertEqual(fields["bounded"].shape, (len(mesh.coordinates), 2, 2))
                 assert_allclose(fields["density"], result.density)
                 self.assertEqual({tuple(edge) for edge in fields["final_edges"]}, set(result.mesh.edges))
+
+    def test_cli_reads_shuffled_solution_and_writes_mesh(self):
+        mesh = grid(3)
+        with TemporaryDirectory() as directory:
+            path = Path(directory)
+            mesh_path, csv_path, config_path = (path / name for name in ("input.su2", "density.csv", "run.json"))
+            write_su2(mesh_path, mesh)
+            with csv_path.open("w", newline="") as stream:
+                writer = csv.writer(stream)
+                writer.writerow(["PointID", "x", "y", "Density"])
+                for i in reversed(range(len(mesh.coordinates))):
+                    x, y = mesh.coordinates[i]
+                    writer.writerow([i, x, y, 1 + x * x])
+            config_path.write_text(json.dumps(
+                {"metric": {"epsilon": 0.1, "h_min": 0.05, "h_max": 0.8, "max_aspect": 3, "target_nodes": 16},
+                 "remeshing": {"max_passes": 1}}
+            ), encoding="utf-8")
+            with redirect_stdout(io.StringIO()):
+                main([str(mesh_path), str(csv_path), str(config_path), str(path / "out")])
+            result = read_su2(path / "out/adapted.su2")
+            report = json.loads((path / "out/summary.json").read_text())
+            self.assertEqual(report["adapted"]["vertices"], len(result.coordinates))
+            self.assertEqual(result.euler_characteristic, 1)

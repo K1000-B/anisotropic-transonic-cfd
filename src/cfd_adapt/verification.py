@@ -1,10 +1,10 @@
-"""Small deterministic conforming manufactured meshes."""
+"""Manufactured meshes and fields for numerical code verification."""
 
 from collections import Counter
 
 import numpy as np
 
-from cfd_adapt.mesh import Mesh, triangle_edges
+from .mesh import Mesh, triangle_edges
 
 
 def with_boundary(xy, triangles, name="wall"):
@@ -14,7 +14,7 @@ def with_boundary(xy, triangles, name="wall"):
 
 
 def grid(n, jitter=0.0, hole=False):
-    """Unit square with n cells per side and optional central square hole."""
+    """Unit square with n cells per side and an optional central hole."""
     if hole and n % 4:
         raise ValueError("hole requires a cell count divisible by four")
     line = np.linspace(0, 1, n + 1)
@@ -36,3 +36,12 @@ def grid(n, jitter=0.0, hole=False):
             triangles.extend(((a, b, c), (a, c, d)))
     used = np.unique(triangles)
     return with_boundary(xy[used], np.searchsorted(used, triangles))
+
+
+def tanh_transition(coordinates, normal, origin, width, base=1.0, jump=0.6):
+    """Density, analytic Hessian and signed normal distance on planar nodes."""
+    distance = (coordinates - origin) @ normal
+    tanh = np.tanh(distance / width)
+    density = base + 0.5 * jump * (1 + tanh)
+    curvature = -jump / width ** 2 * tanh * (1 - tanh ** 2)
+    return density, curvature[:, None, None] * np.outer(normal, normal), distance

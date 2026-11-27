@@ -7,7 +7,7 @@ from cfd_adapt import GeometryConstraints, MetricParameters, RemeshParameters, a
 from cfd_adapt.field import P1MetricField
 from cfd_adapt.mesh import edge_key
 from cfd_adapt.remesh import _Triangulation, remesh, triangle_quality
-from support import grid, with_boundary
+from cfd_adapt.verification import grid, with_boundary
 
 
 def state(mesh, scale=1, constraints=GeometryConstraints()):

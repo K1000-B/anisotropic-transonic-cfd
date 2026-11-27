@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from cfd_adapt.field import OutsideSourceError, P1MetricField
-from support import grid
+from cfd_adapt.verification import grid
 
 
 class FieldTests(unittest.TestCase):
