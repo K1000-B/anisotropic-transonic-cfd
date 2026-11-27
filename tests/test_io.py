@@ -1,10 +1,11 @@
 import csv
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 import io
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 import numpy as np
@@ -109,8 +110,14 @@ class IOTests(unittest.TestCase):
                 {"metric": {"epsilon": 0.1, "h_min": 0.05, "h_max": 0.8, "max_aspect": 3, "target_nodes": 16},
                  "remeshing": {"max_passes": 1}}
             ), encoding="utf-8")
+            arguments = [str(mesh_path), str(csv_path), str(config_path), str(path / "out")]
+            with patch("cfd_adapt.cli.write_diagnostics", side_effect=OSError("write failed")):
+                with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                    main(arguments)
+            self.assertFalse((path / "out").exists())
+            self.assertEqual(list(path.glob(".cfd-adapt-*")), [])
             with redirect_stdout(io.StringIO()):
-                main([str(mesh_path), str(csv_path), str(config_path), str(path / "out")])
+                main(arguments)
             result = read_su2(path / "out/adapted.su2")
             report = json.loads((path / "out/summary.json").read_text())
             self.assertEqual(report["adapted"]["vertices"], len(result.coordinates))

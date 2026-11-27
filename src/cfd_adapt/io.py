@@ -94,6 +94,9 @@ def _element(lines, code, width, optional_id):
 
 def write_su2(path, mesh: Mesh):
     """Write SU2 ASCII with contiguous output point and triangle IDs."""
+    for name in mesh.markers:
+        if "%" in name or "\r" in name:
+            raise ValueError(f"marker {name!r} cannot be represented in SU2 ASCII")
     with Path(path).open("w", encoding="utf-8", newline="\n") as stream:
         stream.write(f"NDIME= 2\nNELEM= {len(mesh.triangles)}\n")
         for i, (a, b, c) in enumerate(mesh.triangles):
@@ -103,8 +106,6 @@ def write_su2(path, mesh: Mesh):
             stream.write(f"{x:.17g} {y:.17g} {i}\n")
         stream.write(f"NMARK= {len(mesh.markers)}\n")
         for name, segments in mesh.markers.items():
-            if "%" in name or "\r" in name:
-                raise ValueError(f"marker {name!r} cannot be represented in SU2 ASCII")
             stream.write(f"MARKER_TAG= {name}\nMARKER_ELEMS= {len(segments)}\n")
             for a, b in segments:
                 stream.write(f"3 {a} {b}\n")

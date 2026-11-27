@@ -3,6 +3,7 @@
 import argparse
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from . import MetricParameters, RemeshParameters, adapt
 from .diagnostics import summarise, write_diagnostics
@@ -33,10 +34,15 @@ def main(argv=None):
             raise ValueError("output directory already exists")
         result = adapt(source, density, metric, remeshing, constraints)
         summary = summarise(source, result, metric, remeshing)
-        args.output.mkdir(parents=True)
-        write_su2(args.output / "adapted.su2", result.mesh)
-        write_diagnostics(args.output, source, result, summary, level=level)
-        (args.output / "config.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(dir=args.output.parent, prefix=".cfd-adapt-") as staging:
+            output = Path(staging)
+            write_su2(output / "adapted.su2", result.mesh)
+            write_diagnostics(output, source, result, summary, level=level)
+            (output / "config.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+            if args.output.exists():
+                raise ValueError("output directory already exists")
+            output.rename(args.output)
     except (OSError, ValueError, TypeError, KeyError, ArithmeticError) as error:
         parser.exit(2, f"cfd-adapt: {error}\n")
     print(f"{len(source.coordinates)} -> {len(result.mesh.coordinates)} vertices, "
