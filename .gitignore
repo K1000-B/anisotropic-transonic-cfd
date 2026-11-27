@@ -1,6 +1,7 @@
 # Operating system and editor artifacts
 .DS_Store
 ._*
+.vscode/
 *~
 *.swp
 *.swo
@@ -14,6 +15,7 @@
 /local/
 
 # Python environments and generated caches
+/.PROJECT_CFDvenv/
 .venv/
 venv/
 __pycache__/
