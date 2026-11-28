@@ -12,7 +12,7 @@ Three elementary Python programs are present in stage 02 (`1fa3b8b`). That commi
 | --- | --- |
 | Baseline mesh generation | Previously generated and geometrically verified; evidence retained |
 | Existing extraction implementation | Present; source unchanged in Mission 03 |
-| Existing mesh adaptation implementation | Present; optional observation-only diagnostics added |
+| Existing mesh adaptation implementation | Present; diagnostics and source-domain safeguards; repair pending execution |
 | Existing Docker CFD runner | Present; minimal launch/log/mount/interruption compatibility changes |
 | Automated adaptive workflow | User rerun passed baseline screening/extraction; stopped in the first remesh |
 | Repository documentation | Updated for actual interfaces and architecture |
@@ -40,6 +40,14 @@ A subsequent user-supplied log passed baseline output screening and extracted Ma
 Static inspection locates this exception in `build_metric_field`'s `edge_pieces`: the source-triangle intervals leave a gap larger than `BARY_TOL` along an evaluated segment. The message records neither endpoints nor boundary tag, so the failing edge and the underlying geometric/search/tolerance cause are unresolved. It cannot currently be attributed to the outlet. The case assigns the marker named `outlet` to `MARKER_FAR`; its name does not prescribe a pressure-outlet condition. The earlier `SURFACE_PRESSURE_DROP` warning did not prevent the baseline solve from finishing.
 
 Diagnosis requires the failing segment coordinates, operation and boundary marker, together with the coverage gap and tolerance. No boundary-policy or numerical-algorithm change, Python execution, Docker/SU2 command or simulation was made during this read-only source diagnosis; only this status record was updated.
+
+### Source-domain robustness repair (pending runtime confirmation)
+
+The user subsequently requested a repair. Source inspection identified two numerical consistency issues and an acceptance gap: midpoint evaluation used a different segment orientation from length evaluation; a segment contained in one source triangle was unnecessarily subjected to general interval clipping; and split/swap candidates could be committed without checking complete new-edge metric coverage. The earlier log does not identify which of these triggered its specific failure.
+
+The repair shares canonical segment ordering, directly integrates the affine metric when one source triangle contains both endpoints, and validates coverage of every changed candidate edge before committing local edits. It keeps `BARY_TOL`, pointwise barycentric cleanup, multi-triangle integration, metric-size/anisotropy bounds, all physical/adaptation inputs and boundary policy. Uncovered proposed edges are rejected locally, while failures on actual working edges still stop explicitly with operation, vertex IDs/tag, endpoints and gap diagnostics.
+
+Static source/diff review checked array dimensions, affine-integration equivalence, direction symmetry, all local-operation call paths and error handling. No Python interpreter, import, compilation, test, numerical diagnostic, remeshing/CFD execution or Docker command was run for this repair. No output was generated or altered, and pre-existing local edits were preserved. Resolution of the reported run, computational overhead and complete workflow convergence remain unverified pending the user's next execution.
 
 Public repository: [K1000-B/anisotropic-transonic-cfd](https://github.com/K1000-B/anisotropic-transonic-cfd). `main` remains the primary branch; Mission 03 continues the existing `codex/02-mesh-adaptation` branch and its HTTPS origin upstream. Git history records commits/publication; check current synchronization each session rather than treating this document as a live monitor.
 

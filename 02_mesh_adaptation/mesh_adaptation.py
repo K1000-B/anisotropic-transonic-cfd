@@ -748,6 +748,41 @@ def build_metric_field(points, triangles, M):
 
         w0, w1 = barycentric(a, ids), barycentric(b, ids)
 
+        # A triangle is convex: if it contains both endpoints, it contains
+        # the complete segment. Integrate that one affine P1 metric directly.
+        # Clipping a nearly source-aligned edge into intervals unnecessarily
+        # divides tiny barycentric endpoint errors by tiny slopes and can
+        # manufacture a parameter-space gap on an otherwise valid edge.
+        # Reuse metric_at's existing containment tolerance and weight cleanup;
+        # do not enlarge the tolerance or extrapolate across a domain hole.
+
+        containing = np.flatnonzero(
+            np.all(w0 >= -BARY_TOL, axis=1)
+            & np.all(w1 >= -BARY_TOL, axis=1)
+        )
+
+        if len(containing):
+
+            k = containing[0]
+
+            weights = np.maximum(
+                np.stack((w0[k], w1[k])),
+                0.0
+            )
+
+            weights /= weights.sum(axis=1, keepdims=True)
+
+            qnodes = np.einsum(
+                'i,kij,j->k',
+                d,
+                nodal_metrics[ids[k]],
+                d
+            )
+
+            qa, qb = weights @ qnodes
+
+            return ((0.0, 1.0, qa, qb, integrate(qa, qb, 1.0)),)
+
         dw = w1 - w0
 
         # Every source triangle initially has the complete
@@ -825,7 +860,14 @@ def build_metric_field(points, triangles, M):
                 continue
 
             if lo[k] > covered + BARY_TOL:
-                raise ValueError('Edge leaves the source domain.')
+                raise ValueError(
+                    'Edge leaves the source domain: '
+                    f'endpoints={a.tolist()} -> {b.tolist()}, '
+                    f'uncovered_t=[{covered:.17g}, {lo[k]:.17g}], '
+                    f'gap={lo[k]-covered:.17g}, '
+                    f'tolerance={BARY_TOL:.17g}, '
+                    f'candidate_triangles={len(ids)}.'
+                )
 
             start = covered
 
@@ -853,7 +895,11 @@ def build_metric_field(points, triangles, M):
 
         if covered < 1.0 - BARY_TOL or not pieces:
             raise ValueError(
-                'Edge not covered by the source mesh.'
+                'Edge not covered by the source mesh: '
+                f'endpoints={a.tolist()} -> {b.tolist()}, '
+                f'covered_until_t={covered:.17g}, '
+                f'tolerance={BARY_TOL:.17g}, '
+                f'candidate_triangles={len(ids)}.'
             )
 
         return tuple(pieces)
@@ -896,12 +942,15 @@ def build_metric_field(points, triangles, M):
         midpoint of the edge.
         """
 
-        a, b = np.asarray(a), np.asarray(b)
+        # Use exactly the same cached segment and direction as metric_length.
+        # Reversing an edge must not trigger a different coverage calculation
+        # after its length has already been accepted.
 
-        pieces = edge_pieces(
-            tuple(a),
-            tuple(b)
-        )
+        a, b = sorted((tuple(a), tuple(b)))
+
+        pieces = edge_pieces(a, b)
+
+        a, b = np.asarray(a), np.asarray(b)
 
         target = 0.5 * sum(
             piece[4]
@@ -1215,10 +1264,23 @@ def adapt_mesh(
     def L(e):
         """Return the metric length of a working edge."""
 
-        return metric_length(
-            points[e[0]],
-            points[e[1]]
-        )
+        try:
+
+            return metric_length(
+                points[e[0]],
+                points[e[1]]
+            )
+
+        except ValueError as error:
+
+            record = boundaries.get(e)
+
+            marker = record[2] if record is not None else 'interior'
+
+            raise ValueError(
+                f'Metric length failed for working edge {e}, '
+                f'marker={marker}: {error}'
+            ) from error
 
     def coordinates(t, changes):
         """
@@ -1279,6 +1341,7 @@ def adapt_mesh(
             - Degenerate or inverted triangles.
             - Conservation of local physical area.
             - Metric triangle quality.
+            - Source-metric coverage of every new or moved edge.
             - Excessively long metric edges.
         """
 
@@ -1388,42 +1451,52 @@ def adapt_mesh(
             if improve and after <= before + QUALITY_GAIN:
                 return False, 0.0
 
+            # Nodal metric evaluations alone do not verify the complete edge.
+            # Check source-domain coverage before committing ANY operation,
+            # including splits and swaps which have no length-growth guard.
+
+            old_edges = {
+                e
+                for t in old
+                for e in triangle_edges(t)
+            }
+
+            new_edges = {
+                e
+                for t in new_triangles
+                for e in triangle_edges(t)
+            }
+
+            length_limit = None
+
             if guard_lengths:
-
-                old_edges = {
-                    e
-                    for t in old
-                    for e in triangle_edges(t)
-                }
-
-                new_edges = {
-                    e
-                    for t in new_triangles
-                    for e in triangle_edges(t)
-                }
 
                 max_before = max(
                     L(e)
                     for e in old_edges
                 )
 
-                # Check newly created or geometrically
-                # modified edges.
+                length_limit = (
+                    max(split_threshold, max_before)
+                    * (1 + QUALITY_GAIN)
+                )
 
-                for e in new_edges:
+            for e in new_edges:
 
-                    if (
-                        e not in old_edges
-                        or any(i in changes for i in e)
-                    ):
+                if (
+                    e not in old_edges
+                    or any(i in changes for i in e)
+                ):
 
-                        a, b = coordinates(e, changes)
+                    a, b = coordinates(e, changes)
 
-                        if metric_length(a, b) > (
-                            max(split_threshold, max_before)
-                            * (1 + QUALITY_GAIN)
-                        ):
-                            return False, 0.0
+                    # A coverage failure rejects this candidate through the
+                    # existing exception handler; it is never extrapolated.
+
+                    length = metric_length(a, b)
+
+                    if length_limit is not None and length > length_limit:
+                        return False, 0.0
 
             # Positive oriented triangles, link checks and
             # unchanged patch boundary prevent foldovers
@@ -1515,9 +1588,20 @@ def adapt_mesh(
 
         # Place the new vertex at the metric midpoint.
 
-        changes = {
-            P: metric_midpoint(points[a], points[b])
-        }
+        try:
+
+            midpoint = metric_midpoint(points[a], points[b])
+
+        except ValueError as error:
+
+            marker = record[2] if record is not None else 'interior'
+
+            raise ValueError(
+                f'Split midpoint failed for working edge {e}, '
+                f'marker={marker}: {error}'
+            ) from error
+
+        changes = {P: midpoint}
 
         new = []
 

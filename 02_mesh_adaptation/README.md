@@ -44,6 +44,14 @@ The existing method uses double P1 recovery, Hessian symmetrisation, absolute ei
 
 The optional `diagnostics` dictionary is a backward-compatible observation interface added in Mission 03. The internal `adapt_mesh(..., max_iterations, diagnostics=None)` forwards already computed final metric/physical quality statistics, metric-edge RMS deviation from one, short/long edge counts and frozen-edge violations; operation counts accumulate across passes. The public wrapper adds bounded complexity and relative complexity error. Neither return contract nor numerical choices change. No value is inferred from unavailable diagnostics.
 
+### Source-domain coverage safeguards
+
+A subsequent robustness repair addresses interval-clipping sensitivity and candidate acceptance. If both segment endpoints belong to one source triangle under the existing `BARY_TOL`, triangle convexity permits direct integration of that triangle's affine P1 metric over the full segment. Endpoint barycentric weights receive the same roundoff cleanup as pointwise metric evaluation. Otherwise the original multi-triangle interval decomposition is retained, including rejection of uncovered segments. The tolerance is not increased and no nearest-triangle fallback or metric extrapolation is introduced.
+
+Metric midpoint and length now use the same canonical endpoint order and cached decomposition. Every new or geometrically modified candidate edge must have source-metric coverage before a split, collapse, swap or relocation can be committed. Unsupported candidate edges are rejected by the existing local validation handler. The pre-existing length-growth limits still apply only to the operations that previously requested them; no new length threshold is imposed on splits/swaps.
+
+An actual working-edge evaluation failure still stops execution. Its message now identifies the metric operation, working vertex IDs and boundary tag (`interior` for an unmarked edge); coverage errors also report endpoints, the uncovered parameter interval, gap/tolerance and candidate-triangle count. These numerical safeguards preserve the fixed source metric, optimal-metric formulas and boundary policy. The repair has received static review only; no remeshing run or numerical regression was executed to confirm it.
+
 ### Boundary policy
 
 `airfoil` and `farfield` vertices are protected. Their coordinates and frozen edges are preserved by the existing algorithm. Outlet-only vertices are not protected; outlet edits remain constrained to the existing straight boundary geometry. Shared outlet/farfield endpoints remain protected. The `outlet` marker and all physical boundary markers remain necessary in the exported mesh. The algorithm also freezes non-outlet boundary edges, checks boundary topology and area conservation, and rejects invalid final triangles. The workflow neither rebuilds the boundary nor changes this policy.
