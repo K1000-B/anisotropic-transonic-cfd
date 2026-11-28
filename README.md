@@ -2,7 +2,7 @@
 
 Scientific project investigating Hessian-based anisotropic triangular mesh adaptation for transonic airfoil shock capture, followed by an assessment of viscous effects and boundary-layer resolution.
 
-**Status:** a native parametric NACA 0012 baseline mesh was generated and geometrically verified (7154 nodes, 13702 triangles). Three elementary Python programs and an automated solve/extract/adapt orchestrator are present. Mission 03 implementation and static source review are complete; the workflow has not been executed. No CFD result, numerical validation of the complete workflow or experimental validation is established. See [project status](docs/project-status.md) for the evidence boundaries.
+**Status:** a native parametric NACA 0012 baseline mesh was generated and geometrically verified (7154 nodes, 13702 triangles). Three elementary Python programs and an automated solve/extract/adapt orchestrator are present. Mission 03 implementation and static source review are complete. Subsequent user testing reached the baseline CFD solve and exposed a log-parser false positive, now corrected in source. Complete workflow integration, numerical validation and experimental validation remain pending. See [project status](docs/project-status.md) for the evidence boundaries.
 
 ## Scientific approach
 

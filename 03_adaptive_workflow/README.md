@@ -1,6 +1,6 @@
 # Automated anisotropic CFD mesh adaptation
 
-[adaptive_workflow.py](adaptive_workflow.py) orchestrates the three [elementary programs](../02_mesh_adaptation/README.md). Source implementation and static review are complete; execution, Docker/CFD integration, numerical validation and performance assessment remain pending. Mission 03 permits source/documentation work only. The commands below are for a separate testing and debugging session with the user; they were not executed during implementation.
+[adaptive_workflow.py](adaptive_workflow.py) orchestrates the three [elementary programs](../02_mesh_adaptation/README.md). Source implementation and static review are complete. Subsequent user testing has reached the baseline CFD solve; [project status](../docs/project-status.md) records that evidence and the log-parser correction. Complete workflow integration, numerical validation and performance assessment remain pending. Mission 03 itself was source/documentation-only; the commands below were not executed during implementation.
 
 ## Future use
 
@@ -188,6 +188,8 @@ Each `mesh.png` uses Matplotlib's non-interactive Agg backend and the actual sup
 Fresh solve directories prevent stale output acceptance. Every solve requires readable nonempty restart/VTU/history, a unique selected field, finite restart/history values, complete point IDs and matching restart coordinates. VTU XML prefix and mesh counts are screened without decoding binary payload; complete VTU/ParaView integrity remains unverified.
 
 The [single-zone driver source](https://github.com/su2code/SU2/blob/v8.5.0/SU2_CFD/src/drivers/CSinglezoneDriver.cpp) distinguishes convergence and iteration-limit messages. These are retained as solver reports, separate from physical validation. History's zero-based `Inner_Iter` is converted to a performed iteration count. Unknown outcomes are labelled `unconfirmed`; finite iteration-limited output may proceed with an explicit warning. Detected divergence, non-finite values, reported solver interruption, inconsistent mesh/solution or missing output stops the workflow. A valid `stationary`/`iteration_limit` remesh may proceed with a recorded warning; a budget discrepancy alone is not failure.
+
+Log screening distinguishes explicit failure diagnostics and delimited numerical `NaN`/`Inf`/`Infinity` values from prose such as SU2's freestream description, "values at infinity". A detected failure includes its exact log line and line number. Independent finite-value checks of numerical history/restart records remain active; a convergence message never overrides an actual invalid record.
 
 The runner owns Docker preflight helpers, activation, execution and lifecycle. The workflow never starts/stops containers itself. A previously running container remains running to protect unrelated work. Failed/interrupted steps retain partial directories and a `failure.txt` when possible; no incomplete solve is registered or recorded as completed. Completed history/PVD entries remain available. There is no automatic resume, parallel solver dispatch, database or GUI. Filesystem failures between CSV/PVD updates may leave collections at different last-completed indices; prior XML remains valid, but cross-file publication is not transactional.
 

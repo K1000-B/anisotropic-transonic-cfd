@@ -486,18 +486,30 @@ def inspect_history(history_path, log_path, flow_iterations):
     if last is None:
         raise ValueError("SU2 history has no iteration data.")
     # CSinglezoneDriver.cpp v8.5.0 reports these two outcomes explicitly.
-    converged, limited, divergent = False, False, False
+    converged, limited = False, False
     with log_path.open(encoding="utf-8") as stream:
-        for line in stream:
+        for line_number, line in enumerate(stream, 1):
             if "Interrupt signal (" in line:
                 raise ValueError("SU2 reported an interruption; this solve is incomplete.")
             converged |= "All convergence criteria satisfied." in line
             limited |= "Maximum number of iterations reached (ITER =" in line
-            divergent |= bool(re.search(r"\bdiverged\b|\bdivergence detected\b|\bnon-finite\b|"
-                                        r"\b(?:nan|inf(?:inity)?)\b",
-                                        line, re.IGNORECASE))
-    if divergent:
-        raise ValueError("Solver log reports divergence/non-finite values; inspect su2.log.")
+            # SU2 describes freestream initialisation as "values at infinity".
+            # Require a failure diagnostic or a delimited numerical value;
+            # searching for bare inf/infinity in arbitrary prose is unsafe.
+            failure = re.search(
+                r"\bdiverged\b|\bdivergence detected\b|\bnon-finite\b|"
+                r"\b(?:nan|inf(?:inity)?)\s+(?:detected|encountered)\b",
+                line, re.IGNORECASE,
+            )
+            nonfinite_value = re.search(
+                r"(?:^|[|=:])\s*[+-]?(?:nan|inf(?:inity)?)\s*(?=$|[|,;])",
+                line, re.IGNORECASE,
+            )
+            if failure or nonfinite_value:
+                raise ValueError(
+                    "Solver log reports divergence/non-finite values at "
+                    f"{log_path.name}:{line_number}: {line.strip()}"
+                )
     iteration = last.get("Inner_Iter")
     if iteration is not None and (iteration < 0 or iteration != int(iteration)):
         raise ValueError("Invalid Inner_Iter history value.")

@@ -87,7 +87,7 @@ After activation, `import pysu2` succeeded with its compiled extension and `CSin
 
 ## Non-interactive launch contract
 
-This activation pattern was historically smoke-tested with diagnostics, before the current orchestration existed. The new runner implements the same explicit activation with additional output streaming and invocation PID handling; those changes have not been executed. The following historical diagnostic command is retained as reference, not a Mission 03 instruction to execute it. From the repository root:
+This activation pattern was historically smoke-tested with diagnostics, before the current orchestration existed. The new runner implements the same explicit activation with additional output streaming and invocation PID handling; subsequent user-run evidence is recorded in [project status](project-status.md). The following historical diagnostic command is retained as reference, not a Mission 03 instruction to execute it. From the repository root:
 
 ```sh
 . local/tool-paths.env
@@ -102,7 +102,7 @@ docker exec -e PYTHONDONTWRITEBYTECODE=1 \
 
 This exact pattern passed both SU2 help and `python -B -c 'import pysu2'`. It needs no TTY, forwards arguments separately and returns the executed command's status. [Docker exec documentation](https://docs.docker.com/reference/cli/docker/container/exec/) describes its running-container requirement, inherited environment and working-directory option. The ignored local configuration must be recreated on another machine from its inspected mounts; it is intentionally not a public dependency.
 
-The implemented runner discovers mounted paths through container inspection, selects the solve directory with `--workdir`, sources the documented activation script and passes `SU2_CFD` and its temporary configuration as separate arguments. It runs serially; no MPI CFD launcher is added. Host orchestration retains configs/manifests, and optional runner logs stream simultaneously to the terminal. A unique PID marker supports a guarded interruption-cleanup attempt without stopping an initially running container. These implementation changes remain untested. Do not use interactive aliases or install host packages to repair container imports.
+The implemented runner discovers mounted paths through container inspection, selects the solve directory with `--workdir`, sources the documented activation script and passes `SU2_CFD` and its temporary configuration as separate arguments. It runs serially; no MPI CFD launcher is added. Host orchestration retains configs/manifests, and optional runner logs stream simultaneously to the terminal. A unique PID marker supports a guarded interruption-cleanup attempt without stopping an initially running container. Full integration and interruption behavior remain unqualified; one user-run baseline does not qualify every lifecycle branch. Do not use interactive aliases or install host packages to repair container imports.
 
 Verify every future option against the [SU2 8.5.0 template](https://github.com/su2code/SU2/blob/v8.5.0/config_template.cfg) and actual build when needed. The observed help agrees with the [8.5.0 main program](https://github.com/su2code/SU2/blob/v8.5.0/SU2_CFD/src/SU2_CFD.cpp); no numerical setting is prescribed.
 

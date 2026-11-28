@@ -6,7 +6,7 @@ Last updated: 2026-11-28.
 
 Initialization, historical runtime qualification and baseline generation are complete. The user selected NACA 0012. Its stage contains native reusable geometry, a parametric triangular C-layout, a specialized verifier and a reviewed reference snapshot (7154 nodes, 13702 triangles). Gmsh coherence, quantitative geometry/topology/quality checks, native SU2 export comparison and visual inspection passed; default MSH regeneration was byte-identical. These previously established results are preserved. Details and limitations are owned by `01_baseline_mesh/README.md`.
 
-Three elementary Python programs are present in stage 02 (`1fa3b8b`). That commit removed the LaTeX files previously added by `e30df92`; their historical state is preserved without restoration. Mission 03 implements `03_adaptive_workflow/adaptive_workflow.py`, minimal diagnostics/runner compatibility changes, per-case results ignore rules and consistent documentation. Review was static only: no Python interpreter/import/compilation, test, fixture, Docker/SU2 command, mesh/plot/result generation or installation was performed during this mission. No CFD solution or physical validation is established.
+Three elementary Python programs are present in stage 02 (`1fa3b8b`). That commit removed the LaTeX files previously added by `e30df92`; their historical state is preserved without restoration. Mission 03 implements `03_adaptive_workflow/adaptive_workflow.py`, minimal diagnostics/runner compatibility changes, per-case results ignore rules and consistent documentation. Its review was static only: no Python interpreter/import/compilation, test, fixture, Docker/SU2 command, mesh/plot/result generation or installation was performed during that mission. Subsequent user-run baseline evidence is described below; complete workflow and physical validation remain pending.
 
 | Component | Status |
 | --- | --- |
@@ -14,16 +14,24 @@ Three elementary Python programs are present in stage 02 (`1fa3b8b`). That commi
 | Existing extraction implementation | Present; source unchanged in Mission 03 |
 | Existing mesh adaptation implementation | Present; optional observation-only diagnostics added |
 | Existing Docker CFD runner | Present; minimal launch/log/mount/interruption compatibility changes |
-| Automated adaptive workflow | Implemented, pending execution |
+| Automated adaptive workflow | Implemented; user baseline solve reached, workflow stopped in log screening |
 | Repository documentation | Updated for actual interfaces and architecture |
 | Static source code review | Completed for Mission 03 changes; no execution-based checks |
 | Workflow runtime testing | Not performed in Mission 03 |
 | Docker integration testing | Not performed in Mission 03; historical diagnostics below remain valid within their original scope |
-| CFD integration testing | Not performed |
+| CFD integration testing | User baseline execution observed; complete integration pending |
 | Numerical validation of the complete workflow | Pending |
 | Performance assessment | Pending |
 | Hybrid RANS mesh adaptation | Not implemented in this mission |
 | Experimental validation | No approved dataset or validation result |
+
+### Subsequent user baseline and log-screening correction
+
+On 2026-11-28 the user supplied a real baseline execution log. Read-only inspection of the retained local `run_001/baseline/` confirmed the same log and the presence of its mesh, plot, local configuration, ASCII restart, VTU and numerical history. SU2 8.5.0 reported its density-residual criterion satisfied at zero-based iteration 129 (130 iterations); the final history records `rms[Rho] = -8.005902785` against the configured -8 threshold. The log shows container start, solver success and container stop. This is evidence for that execution path and that stopping criterion, not physical validation or proof that every required quantity is sufficiently converged.
+
+The workflow then rejected the baseline because its broad non-finite log regex matched the ordinary freestream sentence "No restart solution, use the values at infinity (freestream)." This was the only matching log line found by text inspection. Source screening now requires an explicit failure diagnostic or a delimited numerical token, with the offending log line/number included on failure. Existing finite-value checks of numerical history/restart arrays are retained.
+
+The correction received static source/diff review only; the agent executed no Python, test, Docker/SU2 command or CFD rerun. The repaired parser and subsequent extraction/adaptation loop still require runtime confirmation. Original `run_001` artifacts and its failure report were not modified. Automatic resume is not implemented; a future full invocation reserves the next run and repeats the baseline.
 
 Public repository: [K1000-B/anisotropic-transonic-cfd](https://github.com/K1000-B/anisotropic-transonic-cfd). `main` remains the primary branch; Mission 03 continues the existing `codex/02-mesh-adaptation` branch and its HTTPS origin upstream. Git history records commits/publication; check current synchronization each session rather than treating this document as a live monitor.
 
