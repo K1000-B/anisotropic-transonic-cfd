@@ -14,7 +14,7 @@ Three elementary Python programs are present in stage 02 (`1fa3b8b`). That commi
 | Existing extraction implementation | Present; source unchanged in Mission 03 |
 | Existing mesh adaptation implementation | Present; optional observation-only diagnostics added |
 | Existing Docker CFD runner | Present; minimal launch/log/mount/interruption compatibility changes |
-| Automated adaptive workflow | Implemented; user baseline solve reached, workflow stopped in log screening |
+| Automated adaptive workflow | User rerun passed baseline screening/extraction; stopped in the first remesh |
 | Repository documentation | Updated for actual interfaces and architecture |
 | Static source code review | Completed for Mission 03 changes; no execution-based checks |
 | Workflow runtime testing | Not performed in Mission 03 |
@@ -32,6 +32,14 @@ On 2026-11-28 the user supplied a real baseline execution log. Read-only inspect
 The workflow then rejected the baseline because its broad non-finite log regex matched the ordinary freestream sentence "No restart solution, use the values at infinity (freestream)." This was the only matching log line found by text inspection. Source screening now requires an explicit failure diagnostic or a delimited numerical token, with the offending log line/number included on failure. Existing finite-value checks of numerical history/restart arrays are retained.
 
 The correction received static source/diff review only; the agent executed no Python, test, Docker/SU2 command or CFD rerun. The repaired parser and subsequent extraction/adaptation loop still require runtime confirmation. Original `run_001` artifacts and its failure report were not modified. Automatic resume is not implemented; a future full invocation reserves the next run and repeats the baseline.
+
+### User rerun: source-domain edge coverage failure
+
+A subsequent user-supplied log passed baseline output screening and extracted Mach successfully into the seven-array NPZ. The first cycle/subiteration then constructed its metric, reported initial remeshing statistics and stopped with `ValueError: Edge leaves the source domain.` No completed remeshing pass or adapted CFD solve was reported.
+
+Static inspection locates this exception in `build_metric_field`'s `edge_pieces`: the source-triangle intervals leave a gap larger than `BARY_TOL` along an evaluated segment. The message records neither endpoints nor boundary tag, so the failing edge and the underlying geometric/search/tolerance cause are unresolved. It cannot currently be attributed to the outlet. The case assigns the marker named `outlet` to `MARKER_FAR`; its name does not prescribe a pressure-outlet condition. The earlier `SURFACE_PRESSURE_DROP` warning did not prevent the baseline solve from finishing.
+
+Diagnosis requires the failing segment coordinates, operation and boundary marker, together with the coverage gap and tolerance. No boundary-policy or numerical-algorithm change, Python execution, Docker/SU2 command or simulation was made during this read-only source diagnosis; only this status record was updated.
 
 Public repository: [K1000-B/anisotropic-transonic-cfd](https://github.com/K1000-B/anisotropic-transonic-cfd). `main` remains the primary branch; Mission 03 continues the existing `codex/02-mesh-adaptation` branch and its HTTPS origin upstream. Git history records commits/publication; check current synchronization each session rather than treating this document as a live monitor.
 
