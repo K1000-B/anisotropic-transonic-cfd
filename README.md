@@ -1,43 +1,55 @@
 # Anisotropic Mesh Adaptation for Transonic Airfoil CFD
 
-Scientific project investigating an existing anisotropic triangular mesh adaptation algorithm for capturing shocks in transonic airfoil flows, followed by an assessment of viscous effects and boundary-layer resolution.
+Scientific project investigating Hessian-based anisotropic triangular mesh adaptation for transonic airfoil shock capture, followed by an assessment of viscous effects and boundary-layer resolution.
 
-**Status:** project foundations and runtime qualification are complete. A native parametric NACA 0012 baseline mesh has been generated and geometrically verified: see [baseline mesh](01_baseline_mesh/README.md). No CFD run, experimental dataset or adaptation implementation is present. The existing adaptation work remains external pending technical and publication-rights review.
+**Status:** a native parametric NACA 0012 baseline mesh was generated and geometrically verified (7154 nodes, 13702 triangles). Three elementary Python programs and an automated solve/extract/adapt orchestrator are present. Mission 03 implementation and static source review are complete; the workflow has not been executed. No CFD result, numerical validation of the complete workflow or experimental validation is established. See [project status](docs/project-status.md) for the evidence boundaries.
 
 ## Scientific approach
 
-The planned sequence is theoretical analysis, implementation review and verification, Euler solution/adaptation cycles, transition to RANS with a hybrid boundary-layer mesh, and comparison with experimental literature. An optional study may compare Euler and different RANS mesh strategies using quantitative shock and aerodynamic indicators.
+The sequence is theoretical analysis and code verification, Euler solution/adaptation and spatial-sensitivity studies, transition to RANS with justified wall resolution, and quantitative comparison with experimental literature. The existing adaptation method supports 2D triangles only. Hybrid/quadrilateral boundary-layer mesh adaptation is a later phase; a RANS output route does not establish support for it. Reuse of an Euler-adapted exterior remains a strategy requiring verification. Comparison with the unavailable instructor SU2 procedure is excluded; verification is independent.
 
-The algorithm currently supports triangles only. Extending it to quadrilaterals or hybrid meshes is outside the main scope. Comparison with the unavailable instructor-provided SU2 adaptation procedure has been abandoned. Independent verification will use controlled tests and convergence studies.
+## Repository structure
 
-## Project navigation
+| Directory | Responsibility and current contents |
+| --- | --- |
+| [00_resources](00_resources/README.md) | Reference metadata, original notes and publication-rights tracking |
+| [01_baseline_mesh](01_baseline_mesh/README.md) | Reusable native Gmsh geometry, specialized verifier and reviewed baseline snapshot |
+| [02_mesh_adaptation](02_mesh_adaptation/README.md) | Authoritative extraction, triangular adaptation and Docker CFD runner programs; method documentation |
+| [03_adaptive_workflow](03_adaptive_workflow/README.md) | One procedural `adaptive_workflow.py` and its user guide |
+| [04_euler_simulations](04_euler_simulations/README.md) | Euler case inputs and ignored per-case `results/run_NNN/` |
+| [05_rans_simulations](05_rans_simulations/README.md) | RANS case inputs and the equivalent ignored results organization |
+| [06_experimental_validation](06_experimental_validation/README.md) | Experimental comparison, provenance and uncertainty; no dataset/result yet |
+| `docs/` | Durable scientific, environment, workflow and status documentation |
+| `local/` | Ignored machine settings and preserved historical local archives |
+| `runs/`, `outputs/` | Ignored baseline/other generated artifacts and derived report outputs |
+
+The four-program architecture is `adaptive_workflow.py` calling `run_simulation.py`, `extract_solution.py` and `mesh_adaptation.py` directly. Host Python performs orchestration, extraction, adaptation, plotting and CSV/PVD management. Only SU2 CFD resolution runs inside the existing Docker container. The elementary sources remain in stage 02; they are not duplicated between cases or moved to a new package.
+
+Each simulation case normally contains `baseline.su2`, `config.cfg`, `adaptation.cfg` and its own `results/run_001/`, `run_002/`, etc. The reference CFD configuration identifies Euler or RANS automatically. External/differently located inputs are snapshotted without altering originals. Each run retains baseline and cycle/subiteration meshes, configurations, restart/VTU/history outputs, plots, provenance and global/cycle PVD collections. No example case or numerical output was created in Mission 03.
+
+## Future execution
+
+Use the existing `.PROJECT_CFDvenv` and verify interpreter identity according to [environment.md](docs/environment.md) before executing project Python. In a separate user testing session, from the checkout root:
+
+```bash
+source .PROJECT_CFDvenv/bin/activate
+python 03_adaptive_workflow/adaptive_workflow.py
+```
+
+The program asks for the mesh, reference CFD configuration and adaptation configuration one at a time. Optional non-interactive execution accepts exactly those three positional paths. The complete parameter format, output tree, dependency handling, error behavior and pending runtime checks are in the [workflow user guide](03_adaptive_workflow/README.md). These commands were not executed during Mission 03.
+
+The intended environment is native macOS project Python with NumPy/Matplotlib, the existing `su2-docker` container and SU2 8.5.0. Historical runtime qualification does not establish integration of this new source. AMD64 SU2 executes under emulation on ARM64; high-level container `SU2` Python tools lack internal NumPy, and are not used by this workflow. Nothing was installed or changed in the container.
+
+## Project documentation
 
 | File | Responsibility |
 | --- | --- |
-| [AGENTS.md](AGENTS.md) | Permanent collaboration rules and session entry procedure |
-| [Scientific framework](docs/scientific-framework.md) | Scope, roadmap, verification principles and unresolved scientific choices |
-| [Workflow](docs/workflow.md) | Git, publication, data provenance and reproducibility practices |
-| [Environment](docs/environment.md) | Observed tooling and outstanding environment information |
-| [Project status](docs/project-status.md) | Current state, organization decisions and next actions |
-
-## Scientific stages
-
-| Directory | Responsibility |
-| --- | --- |
-| [00_resources](00_resources/README.md) | References, original notes and publication rights |
-| [01_baseline_mesh](01_baseline_mesh/README.md) | Native parametric Gmsh geometry and initial meshes |
-| [02_mesh_adaptation](02_mesh_adaptation/README.md) | Triangular adaptation method and verification evidence |
-| [03_adaptive_workflow](03_adaptive_workflow/README.md) | Shared automated solve/adapt workflow |
-| [04_euler_simulations](04_euler_simulations/README.md) | Euler cases, convergence and shock-capture studies |
-| [05_rans_simulations](05_rans_simulations/README.md) | Viscous cases, hybrid boundary-layer meshes and analysis |
-| [06_experimental_validation](06_experimental_validation/README.md) | Experimental comparison, provenance and uncertainty |
-
-The baseline stage contains geometry, verification tools and one selected reference snapshot; the other stages currently contain scope documentation. Stage names are not Python import namespaces. Reusable implementation will be shared under `src/` when needed; task-specific mesh inspection remains in the baseline stage. Generated runs are separated from versioned sources. See the [workflow](docs/workflow.md).
-
-## Planned tools
-
-The qualified runtime baseline is host Python 3.14.7, Gmsh `4.15.2-git`, ParaView 6.1.1 and SU2 8.5.0 in the existing Docker container. Host, SU2-wrapper and ParaView Python environments are separate. The AMD64 SU2 image runs under emulation on an ARM64 host; the high-level SU2 Python package lacks NumPy internally, while the low-level wrapper import passes. See [environment qualification](docs/environment.md) for evidence, launch diagnostics and limitations. There is no implemented CFD-case execution procedure yet.
+| [AGENTS.md](AGENTS.md) | Collaboration, session entry, scope and publication rules |
+| [Scientific framework](docs/scientific-framework.md) | Implemented method, scientific roadmap and unresolved choices |
+| [Workflow](docs/workflow.md) | Execution architecture, Git, provenance and result retention |
+| [Environment](docs/environment.md) | Historical observations, intended execution domains and limitations |
+| [Project status](docs/project-status.md) | Current implementation and verification status, next actions |
 
 ## Reuse and publication
 
-No license has been applied. A public repository alone does not establish permission to reuse its contents. A proposed license for original code is recorded in [project status](docs/project-status.md), pending owner approval and clarification of rights to pre-existing work. Third-party materials require separate provenance and redistribution review; protected publications and teaching materials must not be uploaded without permission.
+No license has been applied. A public repository alone does not establish permission to reuse its contents. The proposed license for original code remains subject to owner approval and rights checks. Third-party material requires separate provenance/redistribution review; protected scientific papers, teaching materials and datasets must not be uploaded without permission. Historical theory and local archives were preserved without restoring files removed by earlier commits.

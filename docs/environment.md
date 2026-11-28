@@ -1,6 +1,14 @@
 # Software environment qualification
 
-Assessment date: 2026-11-27. Runtime diagnostics only: no dependency installation, image rebuild, container configuration change, mesh generation or CFD simulation was performed.
+Historical qualification date: 2026-11-27. Those environment diagnostics performed no dependency installation, image rebuild, container configuration change, mesh generation or CFD simulation. Baseline mesh generation was subsequently qualified in its own stage. Mission 03 (2026-11-28) uses documentation/source inspection only: no interpreter, dependency, Docker or SU2 execution was checked anew.
+
+## Intended workflow environment (implementation only)
+
+The new host entry point is `03_adaptive_workflow/adaptive_workflow.py`. It and the elementary extraction/adaptation programs execute natively on macOS using this checkout's existing `.PROJECT_CFDvenv`. NumPy is required for extraction/adaptation/orchestration and Matplotlib for non-interactive mesh figures; the runner otherwise uses the Python standard library plus the existing Docker CLI. These are actual direct requirements, not a claim that the complete package inventory is a portable requirements specification. No additional package was introduced or installed. Dependency availability and runtime compatibility were not reverified during Mission 03.
+
+Only CFD resolution executes inside the existing `su2-docker` container, with expected SU2 8.5.0. Cases/results require an existing writable host bind mount accessible to the container. The runner discovers mounts at future runtime rather than embedding host paths, selects the most specific match and rejects read-only access. External original inputs/dependencies are copied into case/run/solve snapshots under the mounted project; host numerical processing does not use container Python, and no host dependency repairs the high-level container `SU2` package.
+
+The workflow adds fresh-start local configurations, ASCII restart/VTU/history checks, plots, PVD collections and timing/history/provenance. Implementation does not establish Docker launch compatibility, installed SU2 output semantics, format interoperability or numerical correctness. See the [workflow guide](../03_adaptive_workflow/README.md) for the separate future execution/testing procedure. Its commands must not be run as part of this implementation mission.
 
 ## Versions and execution domains
 
@@ -79,7 +87,7 @@ After activation, `import pysu2` succeeded with its compiled extension and `CSin
 
 ## Non-interactive launch contract
 
-This method is documented and smoke-tested; no orchestration program exists yet. From the repository root:
+This activation pattern was historically smoke-tested with diagnostics, before the current orchestration existed. The new runner implements the same explicit activation with additional output streaming and invocation PID handling; those changes have not been executed. The following historical diagnostic command is retained as reference, not a Mission 03 instruction to execute it. From the repository root:
 
 ```sh
 . local/tool-paths.env
@@ -94,7 +102,7 @@ docker exec -e PYTHONDONTWRITEBYTECODE=1 \
 
 This exact pattern passed both SU2 help and `python -B -c 'import pysu2'`. It needs no TTY, forwards arguments separately and returns the executed command's status. [Docker exec documentation](https://docs.docker.com/reference/cli/docker/container/exec/) describes its running-container requirement, inherited environment and working-directory option. The ignored local configuration must be recreated on another machine from its inspected mounts; it is intentionally not a public dependency.
 
-Future orchestration will map a repository-relative run directory below `CFD_CONTAINER_PROJECT`, select it with `--workdir`, and pass `SU2_CFD` with a reviewed configuration, optionally through `mpirun -n` with an approved rank count. Host Python will use subprocess argument lists, collect exit codes, logs and timings, and preserve inputs/manifests. This is a launch policy, not an implemented or tested CFD workflow. Do not use interactive aliases or install host packages to repair container imports.
+The implemented runner discovers mounted paths through container inspection, selects the solve directory with `--workdir`, sources the documented activation script and passes `SU2_CFD` and its temporary configuration as separate arguments. It runs serially; no MPI CFD launcher is added. Host orchestration retains configs/manifests, and optional runner logs stream simultaneously to the terminal. A unique PID marker supports a guarded interruption-cleanup attempt without stopping an initially running container. These implementation changes remain untested. Do not use interactive aliases or install host packages to repair container imports.
 
 Verify every future option against the [SU2 8.5.0 template](https://github.com/su2code/SU2/blob/v8.5.0/config_template.cfg) and actual build when needed. The observed help agrees with the [8.5.0 main program](https://github.com/su2code/SU2/blob/v8.5.0/SU2_CFD/src/SU2_CFD.cpp); no numerical setting is prescribed.
 

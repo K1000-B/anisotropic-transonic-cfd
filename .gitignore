@@ -30,6 +30,10 @@ htmlcov/
 /runs/
 /outputs/
 
+# Adaptive CFD runs; case mesh/configuration inputs remain eligible for review
+/04_euler_simulations/**/results/
+/05_rans_simulations/**/results/
+
 # Document build artifacts
 *.aux
 *.bbl

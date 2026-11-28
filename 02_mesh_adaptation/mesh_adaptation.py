@@ -1041,7 +1041,8 @@ def adapt_mesh(
     metric_midpoint,
     collapse_threshold,
     split_threshold,
-    max_iterations
+    max_iterations,
+    diagnostics=None
 ):
     """
     Perform successive local edits using a fixed source metric.
@@ -2046,6 +2047,10 @@ def adapt_mesh(
 
     status = 'iteration_limit'
 
+    # Optional observation only: never feed operation counts back into edits.
+    totals = dict(split_count=0, collapse_count=0, swap_count=0,
+                  relocation_count=0)
+
     short, long, qmin, qmed, error = statistics()
 
     print(
@@ -2145,6 +2150,11 @@ def adapt_mesh(
         check_boundary_topology()
 
         short, long, qmin, qmed, error = statistics()
+
+        totals['split_count'] += n_split
+        totals['collapse_count'] += n_collapse
+        totals['swap_count'] += n_swap
+        totals['relocation_count'] += n_move
 
         print(
             f'Pass {iteration}: '
@@ -2371,6 +2381,19 @@ def adapt_mesh(
         flush=True
     )
 
+    if diagnostics is not None:
+        diagnostics.update(totals)
+        diagnostics.update(
+            metric_quality_min=qmin,
+            metric_quality_median=qmed,
+            physical_quality_min=float(physical_quality.min()),
+            physical_quality_median=float(np.median(physical_quality)),
+            metric_edge_rms=error,
+            short_edge_count=short,
+            long_edge_count=long,
+            frozen_boundary_violations=frozen_violations,
+        )
+
     return (
         new_points,
         new_triangles,
@@ -2485,7 +2508,9 @@ def mesh_adaptation(
     collapse_threshold,
     split_threshold,
     max_iterations,
-    output_path='adapted_mesh.su2'
+    output_path='adapted_mesh.su2',
+    *,
+    diagnostics=None
 ):
     """
     Construct the optimal bounded metric and adapt the mesh.
@@ -2530,6 +2555,11 @@ def mesh_adaptation(
     -------
     status : str
         converged, stationary or iteration_limit.
+
+    Notes
+    -----
+    The optional diagnostics dictionary receives already computed statistics.
+    The return value and mathematical procedure are unchanged.
     """
 
     # --------------------------------------------------------
@@ -2690,6 +2720,12 @@ def mesh_adaptation(
         M_b
     )
 
+    if diagnostics is not None:
+        diagnostics.update(
+            bounded_metric_complexity=C_bounded,
+            complexity_relative_error=abs(C_bounded-C_star)/C_star,
+        )
+
     # Verify that both the analytical optimal metric
     # and the bounded metric respect the target complexity.
 
@@ -2740,7 +2776,8 @@ def mesh_adaptation(
         metric_midpoint,
         collapse_threshold,
         split_threshold,
-        max_iterations
+        max_iterations,
+        diagnostics=diagnostics
     )
 
     (

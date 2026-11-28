@@ -154,7 +154,8 @@ def host_to_container_path(host_path, container_info):
         matching_mounts.append((
             source,
             destination,
-            relative_path
+            relative_path,
+            mount.get("RW", False)
         ))
 
     # Docker cannot access arbitrary host files unless
@@ -170,10 +171,13 @@ def host_to_container_path(host_path, container_info):
     # If several mounts contain the requested file,
     # select the most specific mounted directory.
 
-    source, destination, relative_path = max(
+    source, destination, relative_path, writable = max(
         matching_mounts,
         key=lambda mount: len(mount[0].parts)
     )
+
+    if not writable:
+        raise ValueError(f"Docker bind mount is read-only: {host_path}")
 
     # Reconstruct the path using the Linux path convention.
 
@@ -297,7 +301,8 @@ def stop_container(container_name):
 def execute_su2(
     container_name,
     container_config_path,
-    container_working_directory
+    container_working_directory,
+    log_path=None
 ):
     """
     Execute SU2_CFD inside the running Docker container.
@@ -323,10 +328,21 @@ def execute_su2(
 
         "exec",
 
+        "-e",
+        "PYTHONDONTWRITEBYTECODE=1",
+
         "--workdir",
         container_working_directory,
 
         container_name,
+
+        "bash", "--noprofile", "--norc", "-c",
+        # Activation is required by the documented non-interactive contract.
+        # The unique PID marker identifies only this invocation on interruption.
+        'source /home/cfd/.python_envs/python310.sh >/dev/null && '
+        'printf "%s\\n" "$$" > "$1" && shift && exec "$@"',
+        "bash",
+        container_config_path + ".pid",
 
         SU2_EXECUTABLE,
 
@@ -352,15 +368,55 @@ def execute_su2(
         flush=True
     )
 
-    # Execute SU2 and wait until the solver terminates.
-    #
-    # check=True raises an exception if the solver
-    # or the Docker execution returns a nonzero exit code.
-
-    subprocess.run(
-        command,
-        check=True
-    )
+    # Stream to the terminal and optionally retain the same output for audit.
+    # No shell is used on the host; paths remain separate argv entries.
+    log_file = None
+    process = None
+    try:
+        if log_path is not None:
+            log_file = open(log_path, "x", encoding="utf-8")
+        process = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, encoding="utf-8", errors="replace", bufsize=1
+        )
+        for line in process.stdout:
+            print(line, end="", flush=True)
+            if log_file is not None:
+                log_file.write(line)
+                log_file.flush()
+        returncode = process.wait()
+        if returncode:
+            raise subprocess.CalledProcessError(returncode, command)
+    except BaseException:
+        if process is not None:
+            # docker exec client termination alone need not stop its solver.
+            # Signal only the PID whose working directory and executable match
+            # this invocation; never stop an already-running shared container.
+            try:
+                subprocess.run([
+                    "docker", "exec", container_name, "bash", "-c",
+                    'if read -r pid < "$1" && [[ "$pid" =~ ^[0-9]+$ ]] '
+                    '&& [[ "$(readlink /proc/$pid/cwd)" == "$2" ]]; then '
+                    'read -r -d "" program < /proc/$pid/cmdline; '
+                    'if [[ "${program##*/}" == "$3" ]]; then '
+                    'kill -TERM "$pid"; fi; fi',
+                    "bash", container_config_path + ".pid",
+                    container_working_directory, SU2_EXECUTABLE,
+                ], check=False, timeout=15)
+            except (OSError, subprocess.TimeoutExpired) as cleanup_error:
+                print(f"Solver interruption cleanup uncertain: {cleanup_error}", flush=True)
+            try:
+                process.wait(timeout=15)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+                print("Check the retained run: solver shutdown is unconfirmed.", flush=True)
+        raise
+    finally:
+        if process is not None and process.stdout is not None:
+            process.stdout.close()
+        if log_file is not None:
+            log_file.close()
 
     print("\n" + "=" * 60)
 
@@ -374,7 +430,7 @@ def execute_su2(
 # 7. COMPLETE SIMULATION WORKFLOW
 # ============================================================
 
-def run_simulation(mesh_path, config_path):
+def run_simulation(mesh_path, config_path, *, log_path=None):
     """
     Run a complete SU2 simulation inside Docker.
 
@@ -386,6 +442,9 @@ def run_simulation(mesh_path, config_path):
     config_path : str or Path
         Path to the SU2 configuration on the host
         operating system.
+
+    log_path : str or Path, optional
+        New host log file, streamed simultaneously to the terminal.
 
     Notes
     -----
@@ -478,7 +537,11 @@ def run_simulation(mesh_path, config_path):
 
         config_path,
 
-        container_mesh_path
+        # Workflow snapshots use a safe basename even when their parent path
+        # contains spaces. SU2 config values are not shell-quoted arguments.
+        mesh_path.name if mesh_path.parent == config_path.parent
+        and not any(character.isspace() for character in mesh_path.name)
+        else container_mesh_path
     )
 
     temporary_config = None
@@ -558,7 +621,8 @@ def run_simulation(mesh_path, config_path):
 
             container_config_path,
 
-            container_working_directory
+            container_working_directory,
+            log_path=log_path
         )
 
     finally:
@@ -590,6 +654,7 @@ def run_simulation(mesh_path, config_path):
                 temporary_config.unlink(
                     missing_ok=True
                 )
+                Path(str(temporary_config) + ".pid").unlink(missing_ok=True)
 
     # --------------------------------------------------------
     # 7.9. Print the final execution summary

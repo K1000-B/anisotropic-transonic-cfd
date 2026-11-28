@@ -37,7 +37,9 @@
 - Verify Gmsh syntax against official documentation when needed. Verify every SU2 option, syntax and behavior against the actual solver version; do not copy unexplained tutorial settings.
 - Keep SU2 `.cfg` files and launch commands documented and reproducible. Use ParaView state files or scripting when useful, and Python for reproducible quantitative analysis and report-quality figures.
 - During foundation and environment qualification work: no CFD runs, generated meshes, scientific algorithms, arbitrary physical/numerical parameters, mock programs or demonstration results.
-- Numbered directories organize scientific stages, not Python import namespaces. Follow `docs/workflow.md` for shared-code ownership, source/output separation and local references to protected resources. Do not duplicate geometry, adaptation logic, workflow code or post-processing between case directories.
+- Numbered directories organize scientific stages, not Python import namespaces. The three authoritative elementary programs remain in `02_mesh_adaptation/`; the single procedural orchestrator is `03_adaptive_workflow/adaptive_workflow.py`. Preserve their mathematical method and readable direct-call architecture; do not add packages, classes or copies without a real need. Follow `docs/workflow.md` for ownership and protected-resource references.
+- Euler/RANS case inputs belong in `04_euler_simulations/` and `05_rans_simulations/`; generated adaptive outputs belong in each case's ignored `results/run_NNN/`. Root `runs/` retains baseline-generation and other documented outputs. Keep configurations, original inputs and generated outputs distinct.
+- Mission 03 is implementation-only: source inspection, Markdown updates and authorized Git operations are permitted; no Python execution/import/compilation, tests, fixtures, Docker/SU2 commands, generated meshes/results or dependency changes. This is a mission-specific restriction; a later user testing/debugging session is separate. Preserve `local/mission-02-abandonment-2026-11-28/` and the existing LaTeX theory unchanged.
 
 ## Git and public publication
 
